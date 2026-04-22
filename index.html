@@ -246,11 +246,32 @@
             const viewport = document.getElementById('hub-viewport');
             viewport.style.display = 'flex';
             
-            // Short delay to allow display:flex to apply before fading in
             setTimeout(() => { viewport.style.opacity = '1'; }, 50);
             
-            // Trigger the new random menu audio loop
-            playRandomMenuSfx();
+            const player = document.getElementById('menu-sfx-player');
+            const maxVol = 0.4;
+            const fadeDuration = 2.0; // Seconds the fade out will last
+            
+            // Unmute the track that was playing silently
+            player.volume = maxVol; 
+            
+            // --- NEW: FADE OUT LOGIC ---
+            player.ontimeupdate = () => {
+                // Check if the track duration is loaded
+                if (player.duration) {
+                    const timeLeft = player.duration - player.currentTime;
+                    // If we are within the last 2 seconds...
+                    if (timeLeft <= fadeDuration && timeLeft > 0) {
+                        // Smoothly calculate volume down to 0
+                        player.volume = Math.max(0, (timeLeft / fadeDuration) * maxVol);
+                    }
+                }
+            };
+            
+            // Attach the loop logic
+            player.onended = () => {
+                setTimeout(playRandomMenuSfx, 4000);
+            };
             
             renderSystem();
         }
