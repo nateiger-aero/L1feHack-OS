@@ -226,16 +226,17 @@
             // Pick a random track from the array
             const randomTrack = menuTracks[Math.floor(Math.random() * menuTracks.length)];
             player.src = randomTrack;
-            player.volume = 0.4; // Adjust volume as needed
+            
+            // --- CRITICAL FIX ---
+            // The previous track faded down to 0 volume. 
+            // We MUST reset it back to max volume before playing the new one!
+            player.volume = 0.4; 
             
             player.play().catch(e => { 
                 console.log("Audio blocked. Retrying in 4 seconds..."); 
-                // FAILSAFE: If the browser blocks it, wait 4 seconds and try again 
-                // instead of breaking the loop entirely.
                 setTimeout(playRandomMenuSfx, 4000);
             });
 
-            // When the track ends, wait 4000 milliseconds (4 seconds), then play again
             player.onended = () => {
                 setTimeout(playRandomMenuSfx, 4000);
             };
