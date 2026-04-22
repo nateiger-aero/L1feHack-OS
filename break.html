@@ -283,12 +283,35 @@
         if (activeIdx < 0) activeIdx += totalGames;
         let actualActive = (totalGames - activeIdx) % totalGames;
 
-        if (actualActive === 0) {
-            // Trivia Menu
-            document.getElementById('plazaMenu').style.display = 'none';
-            document.getElementById('appMenu-trivia').style.display = 'flex';
-        } else {
-            alert(`[ SYSTEM_LOCK ]\nModule ${actualActive + 1} is pending installation. Please select Neural Trivia.`);
+        // Route to the correct module based on the active panel
+        switch(actualActive) {
+            case 0: // Neural Trivia (Built into this file)
+                document.getElementById('plazaMenu').style.display = 'none';
+                document.getElementById('appMenu-trivia').style.display = 'flex';
+                break;
+            case 1: // Pinball
+                window.location.href = "pinball.html";
+                break;
+            case 2: // Blockbreaker
+                window.location.href = "blockbreaker.html";
+                break;
+            case 3: // Tower Defense
+                window.location.href = "towerdefense.html";
+                break;
+            case 4: // Flappy Bird
+                window.location.href = "flappy.html";
+                break;
+            case 5: // Doom Lite
+                window.location.href = "doom.html";
+                break;
+            case 6: // Idle Clicker
+                window.location.href = "idle.html";
+                break;
+            case 7: // Media Player
+                window.location.href = "media.html"; // You already have a media.html mapped in your main index!
+                break;
+            default:
+                alert("SYS_ERROR: Module path not found.");
         }
     }
 
