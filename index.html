@@ -8,6 +8,7 @@
         :root {
             --bg-dark: #020202;
             --neon-cyan: #00e5ff;
+            --neon-green: #39ff14;
             --neon-dim: rgba(0, 229, 255, 0.15);
             --font-main: 'Courier New', Courier, monospace;
             --size-core: 120px;
@@ -21,61 +22,110 @@
             background-size: 60px 60px;
         }
 
-        /* === BOOT OVERLAY === */
-        #boot-screen {
+        /* === 1. PRE-BOOT POWER BUTTON === */
+        #power-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 5000; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 40px; box-sizing: border-box;
+            background: #000; z-index: 9000; display: flex; justify-content: center; align-items: center;
         }
-        #boot-text { width: 100%; max-width: 600px; font-size: 1rem; color: var(--neon-cyan); line-height: 1.6; min-height: 200px;}
-        .load-bar { width: 100%; max-width: 400px; height: 4px; background: #111; margin-top: 20px; position: relative; border: 1px solid #333;}
-        .load-fill { height: 100%; background: var(--neon-cyan); width: 0%; box-shadow: 0 0 15px var(--neon-cyan); }
-        .boot-btn { display: none; margin-top: 30px; background: none; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); padding: 15px 40px; cursor: pointer; font-family: inherit; font-weight: bold; letter-spacing: 5px; text-transform: uppercase;}
-        .boot-btn:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); }
+        .btn-power {
+            background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);
+            padding: 20px 50px; font-size: 1.5rem; font-family: inherit; font-weight: bold;
+            cursor: pointer; letter-spacing: 5px; transition: 0.3s; box-shadow: 0 0 15px rgba(0,229,255,0.2);
+        }
+        .btn-power:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 30px var(--neon-cyan); }
 
-        /* === HUB VIEWPORT === */
-        #hub-viewport {
-            width: 100vw; height: 100vh;
-            display: flex; justify-content: center; align-items: center;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+        /* === 2. THE BOOT ANIMATION SEQUENCE === */
+        #boot-sequence {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 8000; display: none; flex-direction: column;
+            justify-content: center; align-items: center; perspective: 1000px;
+        }
+
+        /* GameCube / PS1 3D Geometry */
+        .geo-container {
+            position: relative; width: 150px; height: 150px;
+            transform-style: preserve-3d;
+            animation: spin-morph 4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
             opacity: 0;
         }
-
-        .system-container { position: relative; width: 600px; height: 600px; display: flex; justify-content: center; align-items: center; }
-
-        /* Center Core */
-        .core-node {
-            width: var(--size-core); height: var(--size-core);
-            border: 2px solid var(--neon-cyan); border-radius: 50%;
-            background: rgba(0,0,0,0.95); box-shadow: 0 0 30px var(--neon-cyan);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100; text-align: center; cursor: pointer; transition: 0.3s;
+        .cube-face {
+            position: absolute; width: 150px; height: 150px;
+            border: 2px solid var(--neon-cyan); background: rgba(0, 229, 255, 0.05);
+            box-shadow: inset 0 0 20px rgba(0,229,255,0.2);
         }
-        .core-node:hover { transform: scale(1.1); box-shadow: 0 0 50px var(--neon-cyan); }
+        .front  { transform: translateZ(75px); }
+        .back   { transform: rotateY(180deg) translateZ(75px); }
+        .left   { transform: rotateY(-90deg) translateZ(75px); }
+        .right  { transform: rotateY(90deg) translateZ(75px); }
+        .top    { transform: rotateX(90deg) translateZ(75px); }
+        .bottom { transform: rotateX(-90deg) translateZ(75px); }
 
-        /* Orbit Wrapper */
+        @keyframes spin-morph {
+            0% { transform: rotateX(0deg) rotateY(0deg) scale(0.1); opacity: 0; }
+            30% { opacity: 1; border-color: var(--neon-cyan); }
+            60% { transform: rotateX(720deg) rotateY(360deg) scale(1); border-color: var(--neon-green); border-radius: 0%;}
+            100% { transform: rotateX(900deg) rotateY(405deg) scale(0.2); opacity: 0; border-radius: 50%; }
+        }
+
+        /* Xbox 360 Energy Sphere */
+        .energy-flash {
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #fff; transform: translate(-50%, -50%) scale(0);
+            box-shadow: 0 0 50px 20px var(--neon-green), 0 0 100px 50px var(--neon-cyan);
+            animation: sphere-erupt 2s ease-out 3s forwards;
+        }
+        @keyframes sphere-erupt {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(100); opacity: 1; background: var(--neon-green); }
+            100% { transform: translate(-50%, -50%) scale(150); opacity: 0; }
+        }
+
+        /* Windows XP Segmented Loading Bar */
+        .xp-loader-wrap {
+            position: absolute; bottom: 15%; width: 250px; height: 15px;
+            border: 2px solid #555; border-radius: 4px; padding: 2px;
+            display: flex; gap: 2px; opacity: 0; animation: fade-in-out 5s linear forwards;
+        }
+        .xp-segment {
+            height: 100%; flex: 1; background: linear-gradient(180deg, #2ecc71, #27ae60);
+            opacity: 0; animation: load-segment 0.1s forwards;
+        }
+        /* Stagger the loading segments */
+        .seg-1 { animation-delay: 0.5s; } .seg-2 { animation-delay: 1.0s; } .seg-3 { animation-delay: 1.5s; }
+        .seg-4 { animation-delay: 2.0s; } .seg-5 { animation-delay: 2.5s; } .seg-6 { animation-delay: 3.0s; }
+
+        @keyframes load-segment { to { opacity: 1; } }
+        @keyframes fade-in-out { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
+        .os-title {
+            position: absolute; font-size: 2.5rem; font-weight: bold; letter-spacing: 10px;
+            color: #fff; text-shadow: 0 0 20px var(--neon-cyan);
+            opacity: 0; animation: title-reveal 3s forwards 3.5s;
+        }
+        @keyframes title-reveal {
+            0% { opacity: 0; transform: scale(0.8); letter-spacing: 20px;}
+            50% { opacity: 1; transform: scale(1); letter-spacing: 10px;}
+            100% { opacity: 0; transform: scale(1.1); }
+        }
+
+        /* === 3. HUB VIEWPORT (Orbit Design) === */
+        #hub-viewport { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s; opacity: 0; display: none;}
+        .system-container { position: relative; width: 600px; height: 600px; display: flex; justify-content: center; align-items: center; }
+        .core-node { width: var(--size-core); height: var(--size-core); border: 2px solid var(--neon-cyan); border-radius: 50%; background: rgba(0,0,0,0.95); box-shadow: 0 0 30px var(--neon-cyan); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; cursor: pointer; transition: 0.3s; }
+        .core-node:hover { transform: scale(1.1); box-shadow: 0 0 50px var(--neon-cyan); }
         .orbit-wrapper { position: absolute; width: 100%; height: 100%; animation: rotate-orbit 45s linear infinite; }
         @keyframes rotate-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Satellites */
-        .satellite {
-            position: absolute; width: var(--size-sat); height: var(--size-sat);
-            border: 1px solid var(--neon-cyan); border-radius: 50%;
-            background: rgba(0,10,20,0.95); color: var(--neon-cyan);
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer; transition: all 0.3s ease; z-index: 110;
-        }
+        .satellite { position: absolute; width: var(--size-sat); height: var(--size-sat); border: 1px solid var(--neon-cyan); border-radius: 50%; background: rgba(0,10,20,0.95); color: var(--neon-cyan); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; z-index: 110; }
         .satellite:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 20px var(--neon-cyan); transform: scale(1.2); }
-
         .sat-label { font-size: 0.5rem; font-weight: bold; text-align: center; animation: counter-rotate 45s linear infinite; }
         @keyframes counter-rotate { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-
         .connector { position: absolute; top: 50%; left: 50%; height: 1px; background: linear-gradient(90deg, var(--neon-cyan), transparent); transform-origin: left center; z-index: 50; opacity: 0.3; }
-
-        /* === UI ELEMENTS === */
+        
         .header-ui { position: fixed; top: 20px; left: 20px; z-index: 200; display: none; }
         .breadcrumb { font-size: 0.6rem; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; }
 
+        /* === 4. APP OVERLAY === */
         #app-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: none; flex-direction: column; }
         .app-bar { background: #000; padding: 10px; border-bottom: 2px solid var(--neon-cyan); display: flex; justify-content: space-between; align-items: center; }
         iframe { flex: 1; border: none; background: #050505;}
@@ -89,10 +139,25 @@
     <audio id="sfx-loading" src="assets/audio/loading.wav"></audio> 
     <audio id="sfx-boot" src="assets/audio/boot.wav"></audio>
 
-    <div id="boot-screen">
-        <div id="boot-text"></div>
-        <div class="load-bar"><div class="load-fill" id="boot-load"></div></div>
-        <button class="boot-btn" id="start-btn" onclick="bootSystem()">ENGAGE CORE</button>
+    <div id="power-overlay">
+        <button class="btn-power" onclick="startBootSequence()">POWER ON</button>
+    </div>
+
+    <div id="boot-sequence">
+        <div class="geo-container">
+            <div class="cube-face front"></div><div class="cube-face back"></div>
+            <div class="cube-face left"></div><div class="cube-face right"></div>
+            <div class="cube-face top"></div><div class="cube-face bottom"></div>
+        </div>
+        
+        <div class="energy-flash"></div>
+        
+        <div class="os-title">L1feHack-OS</div>
+
+        <div class="xp-loader-wrap">
+            <div class="xp-segment seg-1"></div><div class="xp-segment seg-2"></div><div class="xp-segment seg-3"></div>
+            <div class="xp-segment seg-4"></div><div class="xp-segment seg-5"></div><div class="xp-segment seg-6"></div>
+        </div>
     </div>
 
     <div class="header-ui" id="header-ui">
@@ -112,35 +177,7 @@
     </div>
 
     <script>
-        const bootLines = [
-            "> INITIALIZING BIOS v4.0.1...",
-            "> CONNECTING... CONNECTION SUCCESS",
-            "> MOUNTING LOCAL_STORAGE_VOL...",
-            "> DECRYPTING CORE_DATA_VAULT...",
-            "> NODES: [MIND] [BODY] [SPIRIT] ... ONLINE",
-            "> ESTABLISHING ORBITAL NAVIGATION...",
-            "> SYSTEM_READY. AWAITING USER ENGAGEMENT."
-        ];
-
-        function startBoot() {
-            let line = 0;
-            const textEl = document.getElementById('boot-text');
-            const loadFill = document.getElementById('boot-load');
-
-            const typeInterval = setInterval(() => {
-                if (line < bootLines.length) {
-                    textEl.innerHTML += bootLines[line] + "<br>";
-                    line++;
-                    loadFill.style.width = (line / bootLines.length * 100) + "%";
-                } else {
-                    clearInterval(typeInterval);
-                    document.getElementById('start-btn').style.display = "block";
-                }
-            }, 400); 
-        }
-
-        window.onload = startBoot;
-
+        // --- AUDIO HELPERS ---
         function playSfx(id) {
             const sound = document.getElementById(id);
             if(sound) {
@@ -148,16 +185,32 @@
                 sound.play().catch(e => {}); 
             }
         }
+        function playClickSfx() { playSfx('sfx-click'); }
 
-        function playClickSfx() {
-            playSfx('sfx-click');
+        // --- NEW BOOT SEQUENCE LOGIC ---
+        function startBootSequence() {
+            // 1. Hide Power Button & Unlock Audio
+            document.getElementById('power-overlay').style.display = 'none';
+            playSfx('sfx-boot');
+
+            // 2. Show Animation Screen
+            const bootScreen = document.getElementById('boot-sequence');
+            bootScreen.style.display = 'flex';
+
+            // 3. Wait for the CSS animations to finish (approx 6 seconds), then load the OS
+            setTimeout(() => {
+                bootScreen.style.display = 'none';
+                loadOSHub();
+            }, 6000); 
         }
 
-        function bootSystem() {
-            playSfx('sfx-boot');
-            document.getElementById('boot-screen').style.display = 'none';
+        function loadOSHub() {
             document.getElementById('header-ui').style.display = 'block';
-            document.getElementById('hub-viewport').style.opacity = '1';
+            const viewport = document.getElementById('hub-viewport');
+            viewport.style.display = 'flex';
+            
+            // Short delay to allow display:flex to apply before fading in
+            setTimeout(() => { viewport.style.opacity = '1'; }, 50);
             
             const bgm = document.getElementById('bg-ambience');
             bgm.volume = 0.4;
@@ -168,10 +221,8 @@
 
         // --- HIERARCHY DATA MAP ---
         const treeData = {
-            // PAGE 1
             "root": { label: "USER", branches: ["stats", "dash", "inventory"], centerClick: "user_core" },
             
-            // USER MENU (Triggered by clicking Root center)
             "user_core": { label: "USER_CORE", branches: ["profile", "settings"] },
                 "profile": { label: "PROFILE", branches: ["username", "icon", "targets", "records", "p_data"] },
                     "username": { label: "USERNAME", app: "#" },
@@ -184,62 +235,56 @@
                     "ui": { label: "UI_THEME", app: "#" },
                     "sfx": { label: "SFX", app: "#" },
 
-            // PAGE 2
             "stats": { label: "STATS", branches: ["body", "mind", "spirit"] },
             "dash": { label: "DASHBOARD", app: "dashboard.html" },
             "inventory": { label: "INVENTORY", branches: ["finance", "wardrobe", "archive"] },
 
-            // PAGE 3
-            // Stats Satellites
             "body": { label: "BODY", branches: ["hunger", "strength", "health", "hygiene"] },
             "mind": { label: "MIND", branches: ["todo", "calendar", "timer"] },
             "spirit": { label: "SPIRIT", branches: ["rest", "brain_break", "meditation"] },
 
-            // Inventory Satellites
             "finance": { label: "FINANCE", branches: ["budget", "goals", "wishlist"] },
             "wardrobe": { label: "WARDROBE", app: "wardrobe.html" },
             "archive": { label: "ARCHIVE", branches: ["a_recipes", "a_workouts", "playlists"] },
 
-            // PAGE 4
-            // Body Submodules
             "hunger": { label: "HUNGER", branches: ["recipes", "macros", "groceries"] },
-                "recipes": { label: "RECIPES", app: "recipe.html" },
-                "macros": { label: "MACROS", app: "macros.html" },
-                "groceries": { label: "GROCERIES", app: "groceries.html" },
+                "recipes": { label: "RECIPES", app: "#" },
+                "macros": { label: "MACROS", app: "#" },
+                "groceries": { label: "GROCERIES", app: "#" },
             
             "strength": { label: "STRENGTH", branches: ["workouts", "activities", "routines"] },
-                "workouts": { label: "WORKOUTS", app: "workouts.html" },
-                "activities": { label: "ACTIVITIES", app: "activities.html" },
-                "routines": { label: "ROUTINES", app: "routines.html" },
+                "workouts": { label: "WORKOUTS", app: "#" },
+                "activities": { label: "ACTIVITIES", app: "#" },
+                "routines": { label: "ROUTINES", app: "#" },
 
             "health": { label: "HEALTH", branches: ["h_goals", "h_records", "h_progress", "hygiene_sub"] },
-                "h_goals": { label: "GOALS", app: "goals.html" },
-                "h_records": { label: "RECORDS", app: "records.html" },
-                "h_progress": { label: "PROGRESS", app: "progress.html" },
-                "hygiene_sub": { label: "HYGIENE", app: "hygiene.html" },
+                "h_goals": { label: "GOALS", app: "#" },
+                "h_records": { label: "RECORDS", app: "#" },
+                "h_progress": { label: "PROGRESS", app: "#" },
+                "hygiene_sub": { label: "HYGIENE", app: "#" },
 
-            "hygiene": { label: "HYGIENE", app: "hygiene.html" }, // Top level hygiene fallback
+            "hygiene": { label: "HYGIENE", app: "#" }, 
 
-            // Mind Submodules
-            "todo": { label: "TO-DO", app: "todo.html" },
-            "calendar": { label: "CALENDAR", app: "calendar.html" },
-            "timer": { label: "TIMER", app: "timer.html" },
+            "todo": { label: "TO-DO", app: "m_todo.html" },
+            "calendar": { label: "CALENDAR", app: "#" },
+            "timer": { label: "TIMER", app: "#" },
 
-            // Spirit Submodules
-            "rest": { label: "REST", branches: ["r_target", "r_audit", "r_sounds", "brain_break"] },
-                "r_target": { label: "TARGET", app: "r_target.html" },
-                "r_audit": { label: "AUDIT", app: "r_audit.html" },
+            "rest": { label: "REST", branches: ["r_target", "r_audit", "r_sounds"] },
+                "r_target": { label: "TARGET", app: "#" },
+                "r_audit": { label: "AUDIT", app: "#" },
                 "r_sounds": { label: "SOUNDS", app: "r_sounds.html" },
-                "brain_break": { label: "BRAIN_BREAK", app: "break.html" },                 
 
-            "meditation": { label: "MEDITATION", app: "meditation.html" },
+            "brain_break": { label: "BRAIN_BREAK", branches: ["bb_trivia", "bb_games", "bb_videos"] },
+                "bb_trivia": { label: "TRIVIA", app: "break.html" },
+                "bb_games": { label: "GAMES", app: "break.html" },
+                "bb_videos": { label: "VIDEOS", app: "media.html" },
 
-            // Finance Submodules
+            "meditation": { label: "MEDITATION", app: "#" },
+
             "budget": { label: "BUDGET", app: "f_budget.html" },
             "goals": { label: "GOALS", app: "f_goals.html" },
             "wishlist": { label: "WISHLIST", app: "f_wishlist.html" },
 
-            // Archive Submodules
             "a_recipes": { label: "RECIPES", app: "i_archive.html" },
             "a_workouts": { label: "WORKOUTS", app: "i_archive.html" },
             "playlists": { label: "PLAYLISTS", app: "media.html" }
@@ -248,11 +293,11 @@
         let currentLevel = "root";
         let history = [];
 
+        // --- NAVIGATION ENGINE ---
         function renderSystem() {
             const container = document.getElementById('system-container');
             const data = treeData[currentLevel];
             
-            // Build Breadcrumb string
             let bPath = ["SYSTEM_ROOT"];
             if(history.length > 0) bPath = bPath.concat(history.slice(1).map(h => treeData[h].label));
             if(currentLevel !== "root") bPath.push(data.label);
@@ -260,7 +305,6 @@
             
             container.innerHTML = "";
 
-            // Render Core Node
             const core = document.createElement('div');
             core.className = "core-node";
             if (history.length > 0) {
@@ -268,7 +312,6 @@
                 core.onclick = (e) => { e.stopPropagation(); goBack(); };
             } else {
                 core.innerHTML = `<span>${data.label}</span>`;
-                // If it's the root node, clicking the center allows forward navigation
                 if (data.centerClick) {
                     core.onclick = (e) => { e.stopPropagation(); zoomTransition(data.centerClick); };
                 }
@@ -277,7 +320,6 @@
 
             if (!data.branches) return;
 
-            // Render Orbiting Satellites
             const wrapper = document.createElement('div');
             wrapper.className = "orbit-wrapper";
             const angleStep = 360 / data.branches.length;
