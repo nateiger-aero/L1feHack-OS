@@ -188,10 +188,19 @@
         function playClickSfx() { playSfx('sfx-click'); }
 
         // --- NEW BOOT SEQUENCE LOGIC ---
+        // --- NEW BOOT SEQUENCE LOGIC ---
         function startBootSequence() {
             // 1. Hide Power Button & Unlock Audio
             document.getElementById('power-overlay').style.display = 'none';
             playSfx('sfx-boot');
+
+            // --- THE FIX: UNLOCK THE BACKGROUND AUDIO PLAYER ---
+            const menuPlayer = document.getElementById('menu-sfx-player');
+            menuPlayer.src = menuTracks[0]; // Load a track
+            menuPlayer.play().then(() => { 
+                menuPlayer.pause(); // Immediately pause it so it's ready for later
+            }).catch(e => {});
+            // ---------------------------------------------------
 
             // 2. Show Animation Screen
             const bootScreen = document.getElementById('boot-sequence');
@@ -203,6 +212,8 @@
                 loadOSHub();
             }, 6000); 
         }
+
+        // --- UPDATED RANDOM AUDIO LOOP ---
         const menuTracks = [
             "assets/audio/menu1.mp4",
             "assets/audio/menu2.mp4",
@@ -217,7 +228,12 @@
             player.src = randomTrack;
             player.volume = 0.4; // Adjust volume as needed
             
-            player.play().catch(e => { console.log("Audio blocked until interaction"); });
+            player.play().catch(e => { 
+                console.log("Audio blocked. Retrying in 4 seconds..."); 
+                // FAILSAFE: If the browser blocks it, wait 4 seconds and try again 
+                // instead of breaking the loop entirely.
+                setTimeout(playRandomMenuSfx, 4000);
+            });
 
             // When the track ends, wait 4000 milliseconds (4 seconds), then play again
             player.onended = () => {
