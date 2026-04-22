@@ -133,11 +133,11 @@
 </head>
 <body onclick="playClickSfx()">
 
-    <audio id="bg-ambience" loop src="assets/audio/bgm_hub.mp3"></audio> 
     <audio id="sfx-click" src="assets/audio/click.wav"></audio> 
     <audio id="sfx-return" src="assets/audio/return.wav"></audio> 
     <audio id="sfx-loading" src="assets/audio/loading.wav"></audio> 
     <audio id="sfx-boot" src="assets/audio/boot.wav"></audio>
+    <audio id="menu-sfx-player"></audio>
 
     <div id="power-overlay">
         <button class="btn-power" onclick="startBootSequence()">POWER ON</button>
@@ -203,8 +203,29 @@
                 loadOSHub();
             }, 6000); 
         }
+        const menuTracks = [
+            "assets/audio/menu1.mp4",
+            "assets/audio/menu2.mp4",
+            "assets/audio/menu3.mp4"
+        ];
 
-        function loadOSHub() {
+        function playRandomMenuSfx() {
+            const player = document.getElementById('menu-sfx-player');
+            
+            // Pick a random track from the array
+            const randomTrack = menuTracks[Math.floor(Math.random() * menuTracks.length)];
+            player.src = randomTrack;
+            player.volume = 0.4; // Adjust volume as needed
+            
+            player.play().catch(e => { console.log("Audio blocked until interaction"); });
+
+            // When the track ends, wait 4000 milliseconds (4 seconds), then play again
+            player.onended = () => {
+                setTimeout(playRandomMenuSfx, 4000);
+            };
+        }
+
+       function loadOSHub() {
             document.getElementById('header-ui').style.display = 'block';
             const viewport = document.getElementById('hub-viewport');
             viewport.style.display = 'flex';
@@ -212,9 +233,8 @@
             // Short delay to allow display:flex to apply before fading in
             setTimeout(() => { viewport.style.opacity = '1'; }, 50);
             
-            const bgm = document.getElementById('bg-ambience');
-            bgm.volume = 0.4;
-            bgm.play().catch(e => {});
+            // Trigger the new random menu audio loop
+            playRandomMenuSfx();
             
             renderSystem();
         }
