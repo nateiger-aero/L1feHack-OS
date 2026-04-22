@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // CHRONOS_MATRIX</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 1200px; margin: 0 auto; border: 1px solid var(--neon-cyan); 
+            background: rgba(0, 10, 15, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+            position: relative;
+        }
+
+        header { border-bottom: 2px solid var(--neon-cyan); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        .btn-return { background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: 0.3s; }
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* Tabs */
+        .tab-nav { display: flex; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--neon-dim); margin-top: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: var(--text-dim); cursor: pointer; font-family: inherit; font-size: 0.8rem; font-weight: bold; letter-spacing: 2px; transition: 0.3s; }
+        .tab-btn.active { color: var(--neon-cyan); border-bottom: 3px solid var(--neon-cyan); background: rgba(0, 229, 255, 0.1); }
+        .tab-content { display: none; padding: 20px 0; animation: slide-in 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Form & Panel Elements */
+        .panel { background: rgba(0, 229, 255, 0.02); border: 1px solid var(--neon-dim); padding: 20px; margin-bottom: 20px; }
+        h2 { font-size: 0.85rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin: 0 0 15px 0; color: var(--neon-cyan); letter-spacing: 1px; }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; margin-bottom: 5px; margin-top: 15px; }
+        input, select { background: #000; border: 1px solid var(--neon-dim); color: #fff; padding: 10px; font-family: inherit; outline: none; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; }
+        
+        .action-btn { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 10px 15px; cursor: pointer; font-family: inherit; font-size: 0.8rem; font-weight: bold; transition: 0.3s; text-transform: uppercase; margin-top: 15px; width: 100%; letter-spacing: 2px;}
+        .action-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* Calendar Grid */
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #000; border: 1px solid var(--neon-dim); padding: 10px 20px; }
+        .cal-month { font-size: 1.2rem; font-weight: bold; color: var(--neon-cyan); letter-spacing: 2px; }
+        .cal-nav-btn { background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); cursor: pointer; font-family: inherit; padding: 5px 15px; font-weight: bold; transition: 0.2s; }
+        .cal-nav-btn:hover { background: var(--neon-cyan); color: black; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--neon-dim); border: 1px solid var(--neon-dim); }
+        .cal-day-label { text-align: center; font-size: 0.7rem; font-weight: bold; padding: 10px 0; background: rgba(0, 10, 15, 0.9); color: var(--text-dim); }
+        .cal-cell { background: #050505; min-height: 100px; padding: 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .cal-cell:hover { border-color: var(--neon-cyan); background: rgba(0, 229, 255, 0.05); }
+        .cal-date { font-size: 0.8rem; color: #fff; font-weight: bold; align-self: flex-end; opacity: 0.7; margin-bottom: 5px; }
+        .cal-cell.other-month .cal-date { opacity: 0.3; }
+        .cal-cell.today .cal-date { color: var(--neon-cyan); opacity: 1; text-shadow: 0 0 5px var(--neon-cyan); border-bottom: 1px solid var(--neon-cyan); }
+        
+        .event-tag { font-size: 0.55rem; padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; border-left: 2px solid; color: #fff; background: rgba(255,255,255,0.1); }
+        .task-tag { font-size: 0.55rem; padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px dashed var(--neon-cyan); color: var(--neon-cyan); background: rgba(0,0,0,0.5); }
+
+        /* Day View Overlay */
+        #dayViewOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 5, 10, 0.95); z-index: 100; display: none; flex-direction: column; padding: 30px; box-sizing: border-box; }
+        .day-view-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--neon-cyan); padding-bottom: 10px; margin-bottom: 20px; }
+        .day-view-title { font-size: 1.5rem; color: var(--neon-cyan); letter-spacing: 2px; }
+        .close-btn { background: none; border: none; color: #ff2a2a; font-family: inherit; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+
+        .day-split { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; flex: 1; }
+        .event-list-item { background: rgba(0,0,0,0.6); border-left: 3px solid; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .task-list-item { background: rgba(0,0,0,0.6); border: 1px dashed var(--neon-cyan); padding: 12px; margin-bottom: 10px; color: var(--neon-cyan); }
+
+        /* Calendars List */
+        .cal-layer-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-left: 4px solid; background: rgba(0,0,0,0.5); margin-bottom: 10px; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-dim); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_MIND // CHRONOS_MATRIX</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('matrix')">01_TEMPORAL_GRID</button>
+        <button class="tab-btn" onclick="switchTab('config')">02_LAYER_CONFIGURATION</button>
+    </div>
+
+    <div id="matrix" class="tab-content active">
+        <div class="cal-header">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)">◄ REVERSE</button>
+            <div class="cal-month" id="currentMonthLabel">AWAITING_SYNC...</div>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">FORWARD ►</button>
+        </div>
+
+        <div class="cal-grid" id="calendarGrid">
+            <div class="cal-day-label">SUN</div><div class="cal-day-label">MON</div>
+            <div class="cal-day-label">TUE</div><div class="cal-day-label">WED</div>
+            <div class="cal-day-label">THU</div><div class="cal-day-label">FRI</div>
+            <div class="cal-day-label">SAT</div>
+            </div>
+    </div>
+
+    <div id="config" class="tab-content">
+        <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="panel">
+                <h2>REGISTER_NEW_LAYER</h2>
+                <label>LAYER_DESIGNATION (Name):</label>
+                <input type="text" id="cfgName" placeholder="e.g. UNIVERSITY_SCHEDULE">
+                
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>COLOR_CODE:</label>
+                        <input type="color" id="cfgColor" value="#9b59b6" style="padding: 0; height: 36px;">
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 25px;">UPLINK_NOTIFICATIONS</h2>
+                <label>TARGET_EMAIL:</label>
+                <input type="email" id="cfgEmail" placeholder="user@domain.com">
+                <p style="font-size: 0.6rem; color: var(--text-dim); margin-top: 5px;">[ NOTE: Local environment. External mail server linkage required for deployment. ]</p>
+                
+                <button class="action-btn" onclick="saveCalendarLayer()">GENERATE_LAYER</button>
+            </div>
+
+            <div class="panel">
+                <h2>ACTIVE_DATA_LAYERS</h2>
+                <div id="calendarLayerList">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dayViewOverlay">
+        <div class="day-view-header">
+            <div class="day-view-title" id="dayOverlayTitle">DATE_STRING</div>
+            <button class="close-btn" onclick="closeDayView()">[ X ]</button>
+        </div>
+
+        <div class="day-split">
+            <div class="panel" style="margin: 0; border-color: var(--neon-cyan);">
+                <h2>SCHEDULE_NEW_EVENT</h2>
+                <input type="hidden" id="evDate">
+                
+                <label>EVENT_TITLE:</label>
+                <input type="text" id="evTitle" placeholder="e.g. Final Exam">
+
+                <label>ASSIGN_TO_LAYER:</label>
+                <select id="evLayer">
+                    </select>
+
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>TIME:</label>
+                        <input type="time" id="evTime">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>DISPATCH_REMINDER:</label>
+                        <select id="evReminder">
+                            <option value="NONE">NO_REMINDER</option>
+                            <option value="0">AT_TIME_OF_EVENT</option>
+                            <option value="1">1_HOUR_PRIOR</option>
+                            <option value="24">1_DAY_PRIOR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="saveEvent()">COMMIT_TO_MATRIX</button>
+            </div>
+
+            <div class="panel" style="margin: 0; overflow-y: auto;">
+                <h2>DAILY_ITINERARY</h2>
+                
+                <h3 style="color: #fff; margin-top: 0;">EVENTS</h3>
+                <div id="dayEventsList"></div>
+                
+                <h3 style="color: var(--neon-cyan); margin-top: 20px;">SYSTEM_DIRECTIVES (TO-DO)</h3>
+                <div id="dayTasksList"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- STATE & INITIALIZATION ---
+    let currentDate = new Date(); // Tracks the currently displayed month
+    let calendarsDB = [];
+    let eventsDB = [];
+    let tasksDB = [];
+
+    function initData() {
+        // Ensure default calendar exists
+        calendarsDB = JSON.parse(localStorage.getItem('wos_calendars')) || [];
+        if (calendarsDB.length === 0) {
+            calendarsDB.push({ id: "default", name: "DEFAULT_BASE", color: "#00e5ff", email: "" });
+            localStorage.setItem('wos_calendars', JSON.stringify(calendarsDB));
+        }
+
+        eventsDB = JSON.parse(localStorage.getItem('wos_events')) || [];
+        tasksDB = JSON.parse(localStorage.getItem('wos_tasks')) || []; // Pull from To-Do module
+        
+        renderMonth();
+        renderLayerList();
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- GRID RENDER ENGINE ---
+    function changeMonth(offset) {
+        currentDate.setMonth(currentDate.getMonth() + offset);
+        renderMonth();
+    }
+
+    function renderMonth() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Update Header
+        const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+        document.getElementById('currentMonthLabel').innerText = `${monthNames[month]} // ${year}`;
+
+        const grid = document.getElementById('calendarGrid');
+        
+        // Remove old days (keep the 7 header labels)
+        while (grid.children.length > 7) {
+            grid.removeChild(grid.lastChild);
+        }
+
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const todayIso = new Date().toISOString().split("T")[0];
+
+        // Previous Month Padding
+        for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+            grid.appendChild(createCell(year, month - 1, daysInPrevMonth - i, true));
+        }
+
+        // Current Month
+        for (let i = 1; i <= daysInMonth; i++) {
+            grid.appendChild(createCell(year, month, i, false, todayIso));
+        }
+
+        // Next Month Padding (to complete 42 cells grid if needed, usually just fill row)
+        const totalCellsRendered = firstDayOfMonth + daysInMonth;
+        const remainingCells = (Math.ceil(totalCellsRendered / 7) * 7) - totalCellsRendered;
+        for (let i = 1; i <= remainingCells; i++) {
+            grid.appendChild(createCell(year, month + 1, i, true));
+        }
+    }
+
+    function createCell(y, m, d, isOtherMonth, todayIso = "") {
+        const dateObj = new Date(y, m, d);
+        // Correct timezone offset for ISO string formatting locally
+        const isoString = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
+        
+        const cell = document.createElement('div');
+        cell.className = `cal-cell ${isOtherMonth ? 'other-month' : ''} ${isoString === todayIso ? 'today' : ''}`;
+        cell.onclick = () => openDayView(isoString, dateObj);
+
+        // Date Number
+        cell.innerHTML = `<div class="cal-date">${d}</div>`;
+
+        // Inject Events
+        const dayEvents = eventsDB.filter(e => e.date === isoString);
+        dayEvents.slice(0, 3).forEach(ev => {
+            const calObj = calendarsDB.find(c => c.id === ev.calId) || calendarsDB[0];
+            cell.innerHTML += `<div class="event-tag" style="border-color: ${calObj.color};">${ev.title}</div>`;
+        });
+        if (dayEvents.length > 3) cell.innerHTML += `<div style="font-size:0.5rem; color:#888;">+${dayEvents.length - 3} MORE</div>`;
+
+        // Inject Tasks (from To-Do module)
+        const dayTasks = tasksDB.filter(t => t.date === isoString && !t.completed);
+        dayTasks.slice(0, 2).forEach(task => {
+            cell.innerHTML += `<div class="task-tag">[SYS] ${task.name}</div>`;
+        });
+
+        return cell;
+    }
+
+    // --- DAY VIEW (OVERLAY) ---
+    function openDayView(isoDate, dateObj) {
+        document.getElementById('evDate').value = isoDate;
+        document.getElementById('dayOverlayTitle').innerText = `DATA_LOG // ${isoDate}`;
+        
+        // Populate Layer Dropdown
+        const layerSelect = document.getElementById('evLayer');
+        layerSelect.innerHTML = "";
+        calendarsDB.forEach(c => {
+            layerSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+
+        renderDayItinerary(isoDate);
+        document.getElementById('dayViewOverlay').style.display = 'flex';
+    }
+
+    function closeDayView() {
+        document.getElementById('dayViewOverlay').style.display = 'none';
+        document.getElementById('evTitle').value = "";
+    }
+
+    function renderDayItinerary(isoDate) {
+        const evList = document.getElementById('dayEventsList');
+        const tkList = document.getElementById('dayTasksList');
+        evList.innerHTML = ""; tkList.innerHTML = "";
+
+        // Events
+        const dayEvents = eventsDB.filter(e => e.date === isoDate);
+        if(dayEvents.length === 0) evList.innerHTML = `<div style="font-size:0.7rem; color:#555;">[ NO EVENTS RECORDED ]</div>`;
+        
+        dayEvents.sort((a,b) => (a.time || "24:00").localeCompare(b.time || "24:00")).forEach(ev => {
+            const calObj = calendarsDB.find(c => c.id === ev.calId) || calendarsDB[0];
+            const reminderTxt = ev.reminder !== "NONE" ? ` | UPLINK: -${ev.reminder}HR` : "";
+            evList.innerHTML += `
+                <div class="event-list-item" style="border-color: ${calObj.color};">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.9rem; color:#fff;">${ev.title}</div>
+                        <div style="font-size:0.6rem; color:var(--text-dim); margin-top:4px;">LAYER: ${calObj.name} | TIME: ${ev.time || 'ALL_DAY'}${reminderTxt}</div>
+                    </div>
+                    <button onclick="deleteEvent(${ev.id}, '${isoDate}')" style="background:none; border:none; color:#ff2a2a; cursor:pointer;">[ X ]</button>
+                </div>
+            `;
+        });
+
+        // Tasks
+        const dayTasks = tasksDB.filter(t => t.date === isoDate && !t.completed);
+        if(dayTasks.length === 0) tkList.innerHTML = `<div style="font-size:0.7rem; color:#555;">[ NO DIRECTIVES FOUND ]</div>`;
+        
+        dayTasks.forEach(tk => {
+            tkList.innerHTML += `
+                <div class="task-list-item">
+                    <div style="font-weight:bold; font-size:0.8rem;">[SYS] ${tk.name}</div>
+                    <div style="font-size:0.6rem; color:var(--text-dim); margin-top:2px;">PRIORITY: ${tk.importance}</div>
+                </div>
+            `;
+        });
+    }
+
+    function saveEvent() {
+        const title = document.getElementById('evTitle').value.trim();
+        if(!title) return alert("SYS_ERROR: EVENT_TITLE REQUIRED.");
+
+        const newEvent = {
+            id: Date.now(),
+            date: document.getElementById('evDate').value,
+            title: title,
+            calId: document.getElementById('evLayer').value,
+            time: document.getElementById('evTime').value,
+            reminder: document.getElementById('evReminder').value
+        };
+
+        eventsDB.push(newEvent);
+        localStorage.setItem('wos_events', JSON.stringify(eventsDB));
+        
+        document.getElementById('evTitle').value = "";
+        renderMonth(); // Update background grid
+        renderDayItinerary(newEvent.date); // Update overlay
+    }
+
+    function deleteEvent(id, isoDate) {
+        eventsDB = eventsDB.filter(e => e.id !== id);
+        localStorage.setItem('wos_events', JSON.stringify(eventsDB));
+        renderMonth();
+        renderDayItinerary(isoDate);
+    }
+
+    // --- TAB 2: LAYER CONFIGURATION ---
+    function saveCalendarLayer() {
+        const name = document.getElementById('cfgName').value.trim().toUpperCase();
+        if(!name) return alert("SYS_ERROR: LAYER_DESIGNATION REQUIRED.");
+
+        calendarsDB.push({
+            id: Date.now().toString(),
+            name: name,
+            color: document.getElementById('cfgColor').value,
+            email: document.getElementById('cfgEmail').value
+        });
+
+        localStorage.setItem('wos_calendars', JSON.stringify(calendarsDB));
+        document.getElementById('cfgName').value = "";
+        renderLayerList();
+    }
+
+    function renderLayerList() {
+        const list = document.getElementById('calendarLayerList');
+        list.innerHTML = "";
+        
+        calendarsDB.forEach(cal => {
+            const isDefault = cal.id === "default";
+            list.innerHTML += `
+                <div class="cal-layer-item" style="border-color: ${cal.color};">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.9rem; color:#fff;">${cal.name}</div>
+                        <div style="font-size:0.6rem; color:var(--text-dim); margin-top:4px;">UPLINK: ${cal.email || 'INACTIVE'}</div>
+                    </div>
+                    ${!isDefault ? `<button onclick="deleteCalendarLayer('${cal.id}')" style="background:none; border:none; color:#ff2a2a; cursor:pointer;">[ DEL ]</button>` : `<span style="font-size:0.6rem; color:#555;">[ CORE_SYS ]</span>`}
+                </div>
+            `;
+        });
+    }
+
+    function deleteCalendarLayer(id) {
+        if(confirm("WARNING: Deleting this layer will orphan associated events. Proceed?")) {
+            calendarsDB = calendarsDB.filter(c => c.id !== id);
+            // Re-assign orphaned events to default
+            eventsDB.forEach(e => { if(e.calId === id) e.calId = "default"; });
+            
+            localStorage.setItem('wos_calendars', JSON.stringify(calendarsDB));
+            localStorage.setItem('wos_events', JSON.stringify(eventsDB));
+            
+            renderLayerList();
+            renderMonth();
+        }
+    }
+
+    // Run
+    initData();
+</script>
+</body>
+</html>

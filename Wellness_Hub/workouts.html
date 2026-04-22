@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // WORKOUT_ARCHIVE</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 900px; margin: 0 auto; border: 1px solid var(--neon-cyan); 
+            background: rgba(0, 10, 15, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        }
+
+        header { border-bottom: 2px solid var(--neon-cyan); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        .btn-return { 
+            background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); 
+            padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); 
+            transition: 0.3s; 
+        }
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        h2 { font-size: 0.9rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin: 25px 0 15px 0; color: var(--neon-cyan); }
+
+        label { display: block; margin-top: 10px; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; }
+        .input-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; }
+        
+        input, select { 
+            background: #000; border: 1px solid var(--neon-dim); color: #fff; 
+            padding: 10px; font-family: inherit; outline: none; font-size: 0.9rem; width: 100%; box-sizing: border-box;
+        }
+        input:focus, select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+
+        /* Checkbox styling */
+        .cyber-check { display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-primary); font-size: 0.8rem; }
+        .cyber-check input { width: auto; margin: 0; }
+
+        /* Dynamic Grouping Styles */
+        .group-box { background: rgba(0, 229, 255, 0.05); border: 1px solid var(--neon-dim); padding: 15px; margin-bottom: 10px; }
+        .dynamic-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+        
+        .action-btn { 
+            background: rgba(0,0,0,0.5); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); 
+            padding: 10px 15px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold;
+            transition: 0.3s; 
+        }
+        .action-btn:hover { background: var(--neon-cyan); color: black; }
+        .btn-remove { color: #ff5555; border-color: #ff5555; }
+        .btn-remove:hover { background: #ff5555; color: black; box-shadow: 0 0 10px #ff5555; }
+
+        /* Set Lines & Full-Width Rest Badges */
+        .set-wrapper { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+        .set-line { display: flex; gap: 10px; align-items: center; background: #050505; border-left: 2px solid var(--neon-dim); padding: 5px 10px; }
+        .set-label { font-size: 0.7rem; color: var(--neon-cyan); width: 80px; font-weight: bold; }
+        
+        .rest-badge { 
+            background: rgba(0, 229, 255, 0.02); border: 1px dashed var(--neon-cyan); 
+            color: var(--neon-cyan); padding: 4px; font-size: 0.6rem; text-align: center; 
+            letter-spacing: 4px; margin-left: 10px; width: calc(100% - 10px); box-sizing: border-box;
+        }
+        .rest-badge.end-block { border-color: #444; color: #444; border-style: solid; background: transparent; }
+
+        .btn-commit {
+            width: 100%; padding: 18px; background: none; border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan); cursor: pointer; font-weight: bold; letter-spacing: 6px;
+            margin-top: 30px; font-family: inherit; font-size: 1rem;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            transition: 0.3s;
+        }
+        .btn-commit:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 25px var(--neon-cyan); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_STRENGTH // DATA_ENTRY</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <h2>01_EXERCISE_IDENTIFIER</h2>
+    <div class="input-row">
+        <div style="flex: 1;">
+            <label>EXERCISE_NAME:</label>
+            <input type="text" id="exName" placeholder="e.g. DUMBBELL BENCH PRESS">
+        </div>
+        <div style="width: 250px;">
+            <label>MODALITY:</label>
+            <select id="exType" onchange="toggleModality()">
+                <option value="resistance">RESISTANCE (Weight/Reps)</option>
+                <option value="cardio">CARDIO (Distance/Time)</option>
+            </select>
+        </div>
+    </div>
+
+    <h2>02_KINETIC_TARGETS (MUSCLE GROUPS)</h2>
+    <div class="group-box">
+        <label class="cyber-check">
+            <input type="checkbox" id="isCompound" onchange="toggleCompound()">
+            COMPOUND_MOVEMENT_DETECTED
+        </label>
+        
+        <div id="muscleGroupsContainer">
+            <div class="dynamic-row">
+                <input type="text" placeholder="TARGET_GROUP (e.g. CHEST)" class="group-name" style="flex: 2;">
+                <select class="group-role" style="flex: 1;">
+                    <option value="PRIMARY">PRIMARY</option>
+                    <option value="SECONDARY">SECONDARY</option>
+                    <option value="AUXILIARY">AUXILIARY</option>
+                </select>
+            </div>
+        </div>
+        <button class="action-btn" id="btnAddGroup" style="display: none; margin-top: 10px;" onclick="addMuscleGroup()">+ ADD_TARGET_GROUP</button>
+    </div>
+
+    <h2>03_EXECUTION_PARAMETERS</h2>
+    <div class="input-row">
+        <div style="flex: 1;">
+            <label id="lblSets">SETS / INTERVALS:</label>
+            <input type="number" id="exSets" value="4" min="1" oninput="generateSetLines()">
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; margin-bottom: 5px;">
+            <label class="cyber-check">
+                <input type="checkbox" id="chkWarmup" onchange="generateSetLines()"> INCLUDE_WARMUP_PROTOCOL
+            </label>
+            <label class="cyber-check">
+                <input type="checkbox" id="chkCooldown" onchange="generateSetLines()"> INCLUDE_COOLDOWN_PROTOCOL
+            </label>
+        </div>
+    </div>
+
+    <h2>04_LOAD_DISTRIBUTION & RECOVERY</h2>
+    <div class="group-box" id="setsContainer">
+        </div>
+
+    <h2>05_GLOBAL_REST_INTERVAL</h2>
+    <div class="input-row">
+        <div style="flex: 1;">
+            <label>REST_PERIODS:</label>
+            <input type="number" id="restCount" placeholder="Auto-matches blocks" disabled>
+        </div>
+        <div style="flex: 1;">
+            <label>MINUTES:</label>
+            <input type="number" id="restMin" value="1" min="0" oninput="updateRestBadges()">
+        </div>
+        <div style="flex: 1;">
+            <label>SECONDS:</label>
+            <input type="number" id="restSec" value="30" min="0" max="59" oninput="updateRestBadges()">
+        </div>
+    </div>
+
+    <button class="btn-commit" onclick="saveWorkout()">COMMIT_TO_ARCHIVE</button>
+</div>
+
+<script>
+    function toggleCompound() {
+        const isCompound = document.getElementById('isCompound').checked;
+        document.getElementById('btnAddGroup').style.display = isCompound ? 'block' : 'none';
+        if (!isCompound) {
+            const container = document.getElementById('muscleGroupsContainer');
+            while (container.children.length > 1) {
+                container.removeChild(container.lastChild);
+            }
+        }
+    }
+
+    function addMuscleGroup() {
+        const container = document.getElementById('muscleGroupsContainer');
+        const row = document.createElement('div');
+        row.className = 'dynamic-row';
+        row.innerHTML = `
+            <input type="text" placeholder="TARGET_GROUP" class="group-name" style="flex: 2;">
+            <select class="group-role" style="flex: 1;">
+                <option value="SECONDARY">SECONDARY</option>
+                <option value="PRIMARY">PRIMARY</option>
+                <option value="AUXILIARY">AUXILIARY</option>
+            </select>
+            <button class="action-btn btn-remove" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function toggleModality() {
+        const type = document.getElementById('exType').value;
+        document.getElementById('lblSets').innerText = type === 'resistance' ? 'SETS:' : 'INTERVALS:';
+        generateSetLines(); 
+    }
+
+    // Dynamic Updates for the Badges
+    function updateRestBadges() {
+        const rMin = document.getElementById('restMin').value.padStart(2, '0');
+        const rSec = document.getElementById('restSec').value.padStart(2, '0');
+        document.querySelectorAll('.rest-badge:not(.end-block)').forEach(badge => {
+            badge.innerText = `REST [ ${rMin}:${rSec} ]`;
+        });
+    }
+
+    function generateSetLines() {
+        const setsCount = parseInt(document.getElementById('exSets').value) || 1;
+        const hasWarmup = document.getElementById('chkWarmup').checked;
+        const hasCooldown = document.getElementById('chkCooldown').checked;
+        const type = document.getElementById('exType').value;
+        
+        const container = document.getElementById('setsContainer');
+        container.innerHTML = ''; 
+
+        // Calculate total blocks to figure out rests
+        const totalBlocks = setsCount + (hasWarmup ? 1 : 0) + (hasCooldown ? 1 : 0);
+        document.getElementById('restCount').value = totalBlocks > 1 ? totalBlocks - 1 : 0;
+
+        const rMin = document.getElementById('restMin').value.padStart(2, '0');
+        const rSec = document.getElementById('restSec').value.padStart(2, '0');
+
+        let currentBlock = 0;
+        let inputPh1 = type === 'resistance' ? "LOAD (LBS)" : "DISTANCE (MI)";
+        let inputPh2 = type === 'resistance' ? "TARGET_REPS" : "TIME (MIN)";
+
+        // Helper function to build a row
+        function buildRow(label, typeData) {
+            currentBlock++;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'set-wrapper';
+            
+            // The Input Line
+            wrapper.innerHTML = `
+                <div class="set-line" data-type="${typeData}">
+                    <div class="set-label">${label}</div>
+                    <input type="number" class="set-val1" placeholder="${inputPh1}">
+                    <input type="number" class="set-val2" placeholder="${inputPh2}">
+                </div>
+            `;
+
+            // The Rest Badge Line (Below the inputs)
+            if (currentBlock < totalBlocks) {
+                wrapper.innerHTML += `<div class="rest-badge">REST [ ${rMin}:${rSec} ]</div>`;
+            } else {
+                wrapper.innerHTML += `<div class="rest-badge end-block">[ BLOCK_COMPLETE ]</div>`;
+            }
+            container.appendChild(wrapper);
+        }
+
+        // 1. WARMUP
+        if (hasWarmup) buildRow('WARMUP:', 'warmup');
+
+        // 2. MAIN SETS
+        let prefix = type === 'resistance' ? "SET" : "INT";
+        for (let i = 1; i <= setsCount; i++) {
+            buildRow(`${prefix} ${i.toString().padStart(2, '0')}:`, 'set');
+        }
+
+        // 3. COOLDOWN
+        if (hasCooldown) buildRow('COOLDOWN:', 'cooldown');
+    }
+
+    function saveWorkout() {
+        const name = document.getElementById('exName').value.trim();
+        if (!name) return alert("SYS_ERROR: EXERCISE_NAME REQUIRED.");
+
+        const groupElements = document.querySelectorAll('#muscleGroupsContainer .dynamic-row');
+        const groups = Array.from(groupElements).map(row => ({
+            name: row.querySelector('.group-name').value.toUpperCase(),
+            role: row.querySelector('.group-role').value
+        })).filter(g => g.name !== "");
+
+        const setElements = document.querySelectorAll('.set-line');
+        const setsData = Array.from(setElements).map((row, index) => ({
+            type: row.getAttribute('data-type'), // identifies warmup, set, or cooldown
+            load: row.querySelector('.set-val1').value,
+            target: row.querySelector('.set-val2').value
+        }));
+
+        const workoutData = {
+            id: Date.now(),
+            name: name.toUpperCase(),
+            modality: document.getElementById('exType').value,
+            isCompound: document.getElementById('isCompound').checked,
+            muscleGroups: groups,
+            executedBlocks: setsData,
+            rest: {
+                count: document.getElementById('restCount').value,
+                minutes: document.getElementById('restMin').value,
+                seconds: document.getElementById('restSec').value
+            }
+        };
+
+        let archive = JSON.parse(localStorage.getItem('wos_workouts')) || [];
+        archive.push(workoutData);
+        localStorage.setItem('wos_workouts', JSON.stringify(archive));
+
+        alert(`[ SUCCESS ]\n${workoutData.name} HAS BEEN COMMITTED TO THE ARCHIVE.`);
+        
+        // Reset 
+        document.getElementById('exName').value = "";
+        document.getElementById('exSets').value = "4";
+        document.getElementById('chkWarmup').checked = false;
+        document.getElementById('chkCooldown').checked = false;
+        generateSetLines();
+    }
+
+    generateSetLines();
+</script>
+</body>
+</html>

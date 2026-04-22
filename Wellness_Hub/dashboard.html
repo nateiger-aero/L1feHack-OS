@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // DASHBOARD</title>
+    <style>
+        :root {
+            --bg-blur: rgba(10, 10, 10, 0.7);
+            --neon-cyan: #00e5ff;
+            --neon-purple: #b537f2;
+            --neon-blue: #3498db;
+            --text-main: #f0faff;
+            --font-main: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        body {
+            margin: 0; padding: 25px; height: 100vh;
+            background: #050505; color: var(--text-main);
+            font-family: var(--font-main);
+            display: flex; flex-direction: column; box-sizing: border-box;
+            background-image: radial-gradient(circle at top right, #0a1f2e 0%, #000 70%);
+        }
+
+        header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
+        .sys-time { font-family: 'Courier New', monospace; font-size: 2.2rem; font-weight: bold; color: var(--neon-cyan); }
+        .sys-user { text-align: right; font-size: 0.7rem; letter-spacing: 2px; color: var(--neon-blue); line-height: 1.6;}
+
+        .widget-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; min-height: 0; }
+
+        .widget { 
+            background: var(--bg-blur); border: 1px solid rgba(255,255,255,0.1); 
+            backdrop-filter: blur(15px); border-radius: 15px; padding: 20px; 
+            display: flex; flex-direction: column; transition: 0.3s;
+        }
+        
+        .w-header { font-size: 0.65rem; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between;}
+        .w-title-cyan { color: var(--neon-cyan); }
+        .w-title-purple { color: var(--neon-purple); }
+        .w-title-blue { color: var(--neon-blue); }
+
+        /* --- SATELLITE DESIGN --- */
+        .orbit-container {
+            flex: 1; position: relative; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; perspective: 1000px;
+        }
+        .core-node {
+            width: 80px; height: 80px; background: rgba(0, 229, 255, 0.1);
+            border: 2px solid var(--neon-cyan); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Courier New', monospace; font-size: 0.6rem; font-weight: bold;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+            z-index: 10; animation: pulse 2s infinite ease-in-out;
+        }
+        .orbit-ring {
+            position: absolute; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .satellite {
+            position: absolute; width: 10px; height: 10px; background: var(--neon-cyan);
+            border-radius: 50%; box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .ring-1 { width: 150px; height: 150px; animation: rotate 8s linear infinite; }
+        .ring-2 { width: 220px; height: 220px; animation: rotate 15s linear infinite reverse; border-style: dashed; }
+        .ring-3 { width: 280px; height: 280px; animation: rotate 25s linear infinite; }
+
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } }
+
+        /* Content Helpers */
+        .big-stat { font-size: 2.2rem; font-weight: bold; margin: auto 0; }
+        .sub-stat { font-size: 0.75rem; opacity: 0.6; }
+        .progress-container { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-blue)); width: 60%; }
+
+        footer { margin-top: 15px; overflow: hidden; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 0.75rem; color: #444; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;}
+        .ticker { display: inline-block; animation: scroll 40s linear infinite; }
+        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <div class="sys-time" id="clock">00:00:00</div>
+        <div style="font-size: 0.65rem; opacity: 0.5; letter-spacing: 1px;">DATE_STAMP: <span id="date">--.--.--</span></div>
+    </div>
+    <div class="sys-user">
+        [ SYSTEM_IDENTITY: USER_01 ]<br>
+        [ UPLINK_STATUS: OPTIMAL ]
+    </div>
+</header>
+
+<div class="widget-grid">
+    
+    <div class="widget" style="grid-column: span 2; grid-row: span 2;">
+        <div class="w-header w-title-cyan"><span>CENTRAL_DATA_CORE</span><span>REAL_TIME_ORBIT</span></div>
+        <div class="orbit-container">
+            <div class="core-node">SY_ROOT</div>
+            <div class="orbit-ring ring-1"><div class="satellite" style="top: -5px;"></div></div>
+            <div class="orbit-ring ring-2"><div class="satellite" style="left: -5px; background: var(--neon-blue);"></div></div>
+            <div class="orbit-ring ring-3"><div class="satellite" style="bottom: -5px; background: var(--neon-purple);"></div></div>
+        </div>
+    </div>
+
+    <div class="widget">
+        <div class="w-header w-title-blue"><span>CAPITAL_FLOW</span><span>BODY_BR</span></div>
+        <div class="sub-stat">ACTIVE_GOAL: ASSET_ACQUISITION</div>
+        <div class="big-stat" id="goalVal">$0.00</div>
+        <div class="progress-container"><div class="progress-fill" id="goalBar" style="width: 0%"></div></div>
+        <div class="sub-stat" id="goalPct">0% OF TARGET SECURED</div>
+    </div>
+
+    <div class="widget">
+        <div class="w-header w-title-purple"><span>BIO_RECOVERY</span><span>SPIRIT_BR</span></div>
+        <div class="big-stat" style="color: var(--neon-purple);">82%</div>
+        <div class="sub-stat">REST_EFFICIENCY: [HIGH]</div>
+        <div class="sub-stat" style="margin-top: 5px;">ESTIMATED_UPTIME: 14H 20M</div>
+    </div>
+
+</div>
+
+<footer>
+    <div class="ticker">
+        SYSTEM_STATUS: STABLE // ENCRYPTED_TUNNEL: ACTIVE // PROTOCOL_V1.0.4 // SESSION_TOKEN: VALID // UPLINK_STRENGTH: 98% // BROADCASTING_FROM_SECURE_NODE // 
+    </div>
+</footer>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('en-GB');
+        document.getElementById('date').innerText = now.toLocaleDateString('en-GB').replace(/\//g, '.');
+    }
+    
+    function syncStats() {
+        const goals = JSON.parse(localStorage.getItem('wos_finance_goals')) || [];
+        if (goals.length > 0) {
+            const topGoal = goals[0];
+            const pct = Math.min(100, (topGoal.current / topGoal.target) * 100);
+            document.getElementById('goalBar').style.width = pct + "%";
+            document.getElementById('goalVal').innerText = "$" + topGoal.current.toLocaleString();
+            document.getElementById('goalPct').innerText = Math.round(pct) + "% OF TARGET SECURED";
+        }
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+    syncStats();
+</script>
+</body>
+</html>

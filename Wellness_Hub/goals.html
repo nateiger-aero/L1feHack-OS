@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // TARGET_ACQUISITION</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --neon-warn: #f39c12;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 1000px; margin: 0 auto; border: 1px solid var(--neon-cyan); 
+            background: rgba(0, 10, 15, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        }
+
+        header { border-bottom: 2px solid var(--neon-cyan); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        .btn-return { background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: 0.3s; }
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .panel { background: rgba(0, 229, 255, 0.02); border: 1px solid var(--neon-dim); padding: 20px; position: relative; }
+        
+        h2 { font-size: 0.8rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin: 0 0 15px 0; color: var(--neon-cyan); letter-spacing: 1px; }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; margin-bottom: 5px; margin-top: 15px; }
+        
+        input, select, textarea { background: #000; border: 1px solid var(--neon-dim); color: #fff; padding: 10px; font-family: inherit; outline: none; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus, textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+        textarea { resize: vertical; min-height: 60px; }
+
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; }
+        .dynamic-row { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; }
+        
+        /* Multiple Selection & Toggles */
+        .cyber-check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.7rem; color: var(--text-primary); margin-top: 5px; }
+        .cyber-check input { width: auto; margin: 0; }
+        .scroll-box { max-height: 100px; overflow-y: auto; background: #000; border: 1px solid var(--neon-dim); padding: 10px; margin-top: 5px; }
+        .scroll-box label { margin-top: 0; margin-bottom: 8px; }
+
+        .toggle-group { display: flex; gap: 5px; margin-top: 5px; }
+        .toggle-btn { flex: 1; padding: 8px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-dim); color: var(--text-dim); cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; text-align: center; transition: 0.3s; }
+        .toggle-btn.active { background: rgba(0, 229, 255, 0.15); border-color: var(--neon-cyan); color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+
+        /* Buttons */
+        .action-btn { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; transition: 0.3s; text-transform: uppercase; margin-top: 10px; width: 100%; }
+        .action-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 10px var(--neon-cyan); }
+        .btn-remove { width: auto; margin-top: 0; border-color: #ff5555; color: #ff5555; padding: 10px 15px; }
+        .btn-remove:hover { background: #ff5555; color: black; box-shadow: 0 0 10px #ff5555; }
+
+        .btn-commit { width: 100%; padding: 18px; background: none; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); cursor: pointer; font-weight: bold; letter-spacing: 5px; margin-top: 25px; font-family: inherit; font-size: 1rem; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: 0.3s; }
+        .btn-commit:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 25px var(--neon-cyan); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-dim); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_HEALTH // TARGET_ACQUISITION</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <div class="grid-layout">
+        <div class="column">
+            
+            <div class="panel">
+                <h2>01_BIOMETRIC_TARGETS</h2>
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>TARGET_WEIGHT (LBS):</label>
+                        <input type="number" id="gWeight" placeholder="e.g. 175">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>TARGET_BODY_FAT (%):</label>
+                        <input type="number" id="gBodyFat" placeholder="e.g. 15">
+                    </div>
+                </div>
+                <label>DEADLINE_TIMESTAMP:</label>
+                <input type="date" id="gDeadline" style="color: var(--neon-cyan);">
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>02_NUTRITIONAL_PROTOCOLS</h2>
+                
+                <label style="margin-top: 0;">DIETARY_ROUTING (MULTI-SELECT):</label>
+                <div class="scroll-box" id="dietTypes">
+                    <label class="cyber-check"><input type="checkbox" value="BALANCED" checked> STANDARD / BALANCED</label>
+                    <label class="cyber-check"><input type="checkbox" value="HIGH_PROTEIN"> HIGH PROTEIN / HYPERTROPHY</label>
+                    <label class="cyber-check"><input type="checkbox" value="KETO"> KETOGENIC / LOW CARB</label>
+                    <label class="cyber-check"><input type="checkbox" value="PLANT"> PLANT-BASED / VEGAN</label>
+                    <label class="cyber-check"><input type="checkbox" value="FASTING"> INTERMITTENT FASTING</label>
+                </div>
+                
+                <label>MACRO_FOCUS_DIRECTIVES:</label>
+                <div id="macroContainer">
+                    <div class="dynamic-row">
+                        <input type="text" class="macro-input" placeholder="e.g. Increase Fiber" style="flex: 1;">
+                    </div>
+                </div>
+                <button class="action-btn" onclick="addMacro()">+ ADD_MACRO_DIRECTIVE</button>
+
+                <label>CHEAT_DAYS/WK:</label>
+                <input type="number" id="gCheatDays" value="1" min="0" max="7">
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>03_KINETIC_COMMITMENTS</h2>
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>SESSIONS_PER_WEEK:</label>
+                        <input type="number" id="gActiveDays" value="4" min="1" max="7">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>DURATION (MINUTES):</label>
+                        <input type="number" id="gActiveDuration" value="60" min="10" step="5">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="column">
+
+            <div class="panel">
+                <h2>04_RECOVERY_&_HYDRATION</h2>
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>SLEEP_TARGET (HOURS):</label>
+                        <input type="number" id="gSleepDur" value="8" step="0.5">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>WATER_INTAKE (OZ):</label>
+                        <input type="number" id="gWater" value="100" step="10">
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>SHUTDOWN_TIME (BED):</label>
+                        <input type="time" id="gBedtime" value="22:30">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>BOOT_TIME (WAKE):</label>
+                        <input type="time" id="gWaketime" value="06:30">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>05_BEHAVIORAL_MODIFICATION</h2>
+                <div id="habitContainer">
+                    <div class="dynamic-row" style="flex-direction: column; background: rgba(0,0,0,0.4); padding: 10px; border-left: 2px solid var(--neon-cyan);">
+                        <div style="display: flex; width: 100%; gap: 10px;">
+                            <input type="text" class="habit-name" placeholder="TARGET_HABIT (e.g. 10 Min Stretch)" style="flex: 1;">
+                        </div>
+                        <div class="toggle-group" style="width: 100%;">
+                            <div class="toggle-btn active" onclick="setHabitType('INITIATE', this)">INITIATE (BUILD)</div>
+                            <div class="toggle-btn" onclick="setHabitType('TERMINATE', this)">TERMINATE (BREAK)</div>
+                            <input type="hidden" class="habit-type" value="INITIATE">
+                        </div>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="addHabit()">+ ADD_BEHAVIOR_PROTOCOL</button>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>06_CUSTOM_DIRECTIVES</h2>
+                <div id="directiveContainer">
+                    <div class="dynamic-row">
+                        <textarea class="custom-directive" placeholder="Enter specific milestone or parameter..." style="flex: 1;"></textarea>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="addDirective()">+ ADD_CUSTOM_DIRECTIVE</button>
+            </div>
+
+        </div>
+    </div>
+
+    <button class="btn-commit" onclick="compileGoals()">LOCK_PARAMETERS_INTO_ARCHIVE</button>
+
+</div>
+
+<script>
+    // --- UI DYNAMIC GENERATION ---
+
+    function addMacro() {
+        const container = document.getElementById('macroContainer');
+        const row = document.createElement('div');
+        row.className = 'dynamic-row';
+        row.innerHTML = `
+            <input type="text" class="macro-input" placeholder="e.g. Decrease Sugar" style="flex: 1;">
+            <button class="action-btn btn-remove" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function addHabit() {
+        const container = document.getElementById('habitContainer');
+        const row = document.createElement('div');
+        row.className = 'dynamic-row';
+        row.style = 'flex-direction: column; background: rgba(0,0,0,0.4); padding: 10px; border-left: 2px solid var(--neon-cyan); margin-top: 15px;';
+        row.innerHTML = `
+            <div style="display: flex; width: 100%; gap: 10px;">
+                <input type="text" class="habit-name" placeholder="TARGET_HABIT" style="flex: 1;">
+                <button class="action-btn btn-remove" style="margin-top: 0;" onclick="this.parentElement.parentElement.remove()">X</button>
+            </div>
+            <div class="toggle-group" style="width: 100%;">
+                <div class="toggle-btn active" onclick="setHabitType('INITIATE', this)">INITIATE (BUILD)</div>
+                <div class="toggle-btn" onclick="setHabitType('TERMINATE', this)">TERMINATE (BREAK)</div>
+                <input type="hidden" class="habit-type" value="INITIATE">
+            </div>
+        `;
+        container.appendChild(row);
+    }
+
+    function addDirective() {
+        const container = document.getElementById('directiveContainer');
+        const row = document.createElement('div');
+        row.className = 'dynamic-row';
+        row.innerHTML = `
+            <textarea class="custom-directive" placeholder="Enter specific milestone or parameter..." style="flex: 1;"></textarea>
+            <button class="action-btn btn-remove" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    // --- TOGGLE LOGIC ---
+    function setHabitType(type, element) {
+        const group = element.parentElement;
+        group.querySelector('.habit-type').value = type;
+        
+        // Remove active class from siblings
+        for (let btn of group.querySelectorAll('.toggle-btn')) {
+            btn.classList.remove('active');
+        }
+        element.classList.add('active');
+    }
+
+    // --- DATA COMPILATION ---
+    function compileGoals() {
+        
+        // 1. Gather Selected Diet Types (Scrollbox Checkboxes)
+        const dietBoxes = document.querySelectorAll('#dietTypes input:checked');
+        const selectedDiets = Array.from(dietBoxes).map(cb => cb.value);
+
+        // 2. Gather Macro Directives (Dynamic Inputs)
+        const macroInputs = document.querySelectorAll('.macro-input');
+        const macroList = Array.from(macroInputs).map(input => input.value.trim()).filter(val => val !== "");
+
+        // 3. Gather Behavioral Modifications (Dynamic Blocks)
+        const habitBlocks = document.querySelectorAll('#habitContainer .dynamic-row');
+        const behaviorList = Array.from(habitBlocks).map(block => {
+            const name = block.querySelector('.habit-name').value.trim();
+            const type = block.querySelector('.habit-type').value;
+            if (name !== "") return { name, type };
+            return null;
+        }).filter(h => h !== null);
+
+        // 4. Gather Custom Directives (Dynamic Textareas)
+        const directiveInputs = document.querySelectorAll('.custom-directive');
+        const directiveList = Array.from(directiveInputs).map(txt => txt.value.trim()).filter(val => val !== "");
+
+        // Compile Master Object
+        const goalsData = {
+            timestamp: Date.now(),
+            biometrics: {
+                targetWeight: document.getElementById('gWeight').value,
+                targetBodyFat: document.getElementById('gBodyFat').value,
+                deadline: document.getElementById('gDeadline').value
+            },
+            nutrition: {
+                dietTypes: selectedDiets,
+                macroFocus: macroList,
+                cheatDays: document.getElementById('gCheatDays').value
+            },
+            kinetics: {
+                sessionsPerWeek: document.getElementById('gActiveDays').value,
+                durationMinutes: document.getElementById('gActiveDuration').value
+            },
+            recovery: {
+                sleepHours: document.getElementById('gSleepDur').value,
+                bedtime: document.getElementById('gBedtime').value,
+                waketime: document.getElementById('gWaketime').value,
+                waterOz: document.getElementById('gWater').value
+            },
+            behaviors: behaviorList,
+            customDirectives: directiveList
+        };
+
+        // Save to LocalStorage
+        let archive = JSON.parse(localStorage.getItem('wos_health_goals')) || [];
+        archive.push(goalsData);
+        localStorage.setItem('wos_health_goals', JSON.stringify(archive));
+
+        alert("[ TARGETS ACQUIRED ]\nAll structural parameters logged into archive.");
+    }
+
+    // Initialize date input to today
+    document.getElementById('gDeadline').min = new Date().toISOString().split("T")[0];
+</script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L1feHack-OS | Neural Audio Interface</title>
+    <style>
+        :root {
+            --bg-dark: #020202;
+            --neon-cyan: #00e5ff;
+            --neon-dim: rgba(0, 229, 255, 0.15);
+            --font-main: 'Courier New', Courier, monospace;
+            --size-core: 120px;
+            --size-sat: 65px;
+        }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-dark); color: white;
+            font-family: var(--font-main); overflow: hidden; height: 100vh;
+            background-image: radial-gradient(var(--neon-dim) 1.5px, transparent 1.5px);
+            background-size: 60px 60px;
+        }
+
+        /* === BOOT OVERLAY === */
+        #boot-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 5000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 40px; box-sizing: border-box;
+        }
+        #boot-text { width: 100%; max-width: 600px; font-size: 1rem; color: var(--neon-cyan); line-height: 1.6; min-height: 200px;}
+        .load-bar { width: 100%; max-width: 400px; height: 4px; background: #111; margin-top: 20px; position: relative; border: 1px solid #333;}
+        .load-fill { height: 100%; background: var(--neon-cyan); width: 0%; box-shadow: 0 0 15px var(--neon-cyan); }
+        .boot-btn { display: none; margin-top: 30px; background: none; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); padding: 15px 40px; cursor: pointer; font-family: inherit; font-weight: bold; letter-spacing: 5px; text-transform: uppercase;}
+        .boot-btn:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); }
+
+        /* === HUB VIEWPORT === */
+        #hub-viewport {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+            opacity: 0;
+        }
+
+        .system-container { position: relative; width: 600px; height: 600px; display: flex; justify-content: center; align-items: center; }
+
+        /* Center Core */
+        .core-node {
+            width: var(--size-core); height: var(--size-core);
+            border: 2px solid var(--neon-cyan); border-radius: 50%;
+            background: rgba(0,0,0,0.95); box-shadow: 0 0 30px var(--neon-cyan);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .core-node:hover { transform: scale(1.1); box-shadow: 0 0 50px var(--neon-cyan); }
+
+        /* Orbit Wrapper */
+        .orbit-wrapper { position: absolute; width: 100%; height: 100%; animation: rotate-orbit 45s linear infinite; }
+        @keyframes rotate-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Satellites */
+        .satellite {
+            position: absolute; width: var(--size-sat); height: var(--size-sat);
+            border: 1px solid var(--neon-cyan); border-radius: 50%;
+            background: rgba(0,10,20,0.95); color: var(--neon-cyan);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: all 0.3s ease; z-index: 110;
+        }
+        .satellite:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 20px var(--neon-cyan); transform: scale(1.2); }
+
+        .sat-label { font-size: 0.5rem; font-weight: bold; text-align: center; animation: counter-rotate 45s linear infinite; }
+        @keyframes counter-rotate { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+        .connector { position: absolute; top: 50%; left: 50%; height: 1px; background: linear-gradient(90deg, var(--neon-cyan), transparent); transform-origin: left center; z-index: 50; opacity: 0.3; }
+
+        /* === UI ELEMENTS === */
+        .header-ui { position: fixed; top: 20px; left: 20px; z-index: 200; display: none; }
+        .breadcrumb { font-size: 0.6rem; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; }
+
+        #app-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: none; flex-direction: column; }
+        .app-bar { background: #000; padding: 10px; border-bottom: 2px solid var(--neon-cyan); display: flex; justify-content: space-between; align-items: center; }
+        iframe { flex: 1; border: none; background: #050505;}
+    </style>
+</head>
+<body onclick="playClickSfx()">
+
+    <audio id="bg-ambience" loop src="assets/audio/bgm_hub.mp3"></audio> 
+    <audio id="sfx-click" src="assets/audio/click.wav"></audio> 
+    <audio id="sfx-return" src="assets/audio/return.wav"></audio> 
+    <audio id="sfx-loading" src="assets/audio/loading.wav"></audio> 
+    <audio id="sfx-boot" src="assets/audio/boot.wav"></audio>
+
+    <div id="boot-screen">
+        <div id="boot-text"></div>
+        <div class="load-bar"><div class="load-fill" id="boot-load"></div></div>
+        <button class="boot-btn" id="start-btn" onclick="bootSystem()">ENGAGE CORE</button>
+    </div>
+
+    <div class="header-ui" id="header-ui">
+        <div class="breadcrumb" id="breadcrumb">SYSTEM_ROOT</div>
+    </div>
+
+    <div id="hub-viewport">
+        <div class="system-container" id="system-container"></div>
+    </div>
+
+    <div id="app-overlay">
+        <div class="app-bar">
+            <span style="color: var(--neon-cyan); font-size: 0.7rem; letter-spacing: 2px;">SECURE_DATA_TUNNEL_ESTABLISHED</span>
+            <button onclick="closeApp()" style="background:none; border:1px solid var(--neon-cyan); color:var(--neon-cyan); padding:5px 15px; cursor:pointer; font-weight: bold; font-family: inherit;">◄ DISCONNECT</button>
+        </div>
+        <iframe id="app-frame" src=""></iframe>
+    </div>
+
+    <script>
+        const bootLines = [
+            "> INITIALIZING BIOS v4.0.1...",
+            "> CONNECTING... CONNECTION SUCCESS",
+            "> MOUNTING LOCAL_STORAGE_VOL...",
+            "> DECRYPTING CORE_DATA_VAULT...",
+            "> NODES: [MIND] [BODY] [SPIRIT] ... ONLINE",
+            "> ESTABLISHING ORBITAL NAVIGATION...",
+            "> SYSTEM_READY. AWAITING USER ENGAGEMENT."
+        ];
+
+        function startBoot() {
+            let line = 0;
+            const textEl = document.getElementById('boot-text');
+            const loadFill = document.getElementById('boot-load');
+
+            const typeInterval = setInterval(() => {
+                if (line < bootLines.length) {
+                    textEl.innerHTML += bootLines[line] + "<br>";
+                    line++;
+                    loadFill.style.width = (line / bootLines.length * 100) + "%";
+                } else {
+                    clearInterval(typeInterval);
+                    document.getElementById('start-btn').style.display = "block";
+                }
+            }, 400); 
+        }
+
+        window.onload = startBoot;
+
+        function playSfx(id) {
+            const sound = document.getElementById(id);
+            if(sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => {}); 
+            }
+        }
+
+        function playClickSfx() {
+            playSfx('sfx-click');
+        }
+
+        function bootSystem() {
+            playSfx('sfx-boot');
+            document.getElementById('boot-screen').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('hub-viewport').style.opacity = '1';
+            
+            const bgm = document.getElementById('bg-ambience');
+            bgm.volume = 0.4;
+            bgm.play().catch(e => {});
+            
+            renderSystem();
+        }
+
+        // --- HIERARCHY DATA MAP ---
+        const treeData = {
+            // PAGE 1
+            "root": { label: "USER", branches: ["stats", "dash", "inventory"], centerClick: "user_core" },
+            
+            // USER MENU (Triggered by clicking Root center)
+            "user_core": { label: "USER_CORE", branches: ["profile", "settings"] },
+                "profile": { label: "PROFILE", branches: ["username", "icon", "targets", "records", "p_data"] },
+                    "username": { label: "USERNAME", app: "#" },
+                    "icon": { label: "ICON", app: "#" },
+                    "targets": { label: "TARGETS", app: "#" },
+                    "records": { label: "RECORDS", app: "#" },
+                    "p_data": { label: "DATA", app: "#" },
+                "settings": { label: "SETTINGS", branches: ["preferences", "ui", "sfx"] },
+                    "preferences": { label: "PREFS", app: "#" },
+                    "ui": { label: "UI_THEME", app: "#" },
+                    "sfx": { label: "SFX", app: "#" },
+
+            // PAGE 2
+            "stats": { label: "STATS", branches: ["body", "mind", "spirit"] },
+            "dash": { label: "DASHBOARD", app: "dashboard.html" },
+            "inventory": { label: "INVENTORY", branches: ["finance", "wardrobe", "archive"] },
+
+            // PAGE 3
+            // Stats Satellites
+            "body": { label: "BODY", branches: ["hunger", "strength", "health", "hygiene"] },
+            "mind": { label: "MIND", branches: ["todo", "calendar", "timer"] },
+            "spirit": { label: "SPIRIT", branches: ["rest", "brain_break", "meditation"] },
+
+            // Inventory Satellites
+            "finance": { label: "FINANCE", branches: ["budget", "goals", "wishlist"] },
+            "wardrobe": { label: "WARDROBE", app: "wardrobe.html" },
+            "archive": { label: "ARCHIVE", branches: ["a_recipes", "a_workouts", "playlists"] },
+
+            // PAGE 4
+            // Body Submodules
+            "hunger": { label: "HUNGER", branches: ["recipes", "macros", "groceries"] },
+                "recipes": { label: "RECIPES", app: "recipe.html" },
+                "macros": { label: "MACROS", app: "macros.html" },
+                "groceries": { label: "GROCERIES", app: "groceries.html" },
+            
+            "strength": { label: "STRENGTH", branches: ["workouts", "activities", "routines"] },
+                "workouts": { label: "WORKOUTS", app: "workouts.html" },
+                "activities": { label: "ACTIVITIES", app: "activities.html" },
+                "routines": { label: "ROUTINES", app: "routines.html" },
+
+            "health": { label: "HEALTH", branches: ["h_goals", "h_records", "h_progress", "hygiene_sub"] },
+                "h_goals": { label: "GOALS", app: "goals.html" },
+                "h_records": { label: "RECORDS", app: "records.html" },
+                "h_progress": { label: "PROGRESS", app: "progress.html" },
+                "hygiene_sub": { label: "HYGIENE", app: "hygiene.html" },
+
+            "hygiene": { label: "HYGIENE", app: "hygiene.html" }, // Top level hygiene fallback
+
+            // Mind Submodules
+            "todo": { label: "TO-DO", app: "todo.html" },
+            "calendar": { label: "CALENDAR", app: "calendar.html" },
+            "timer": { label: "TIMER", app: "timer.html" },
+
+            // Spirit Submodules
+            "rest": { label: "REST", branches: ["r_target", "r_audit", "r_sounds", "brain_break"] },
+                "r_target": { label: "TARGET", app: "r_target.html" },
+                "r_audit": { label: "AUDIT", app: "r_audit.html" },
+                "r_sounds": { label: "SOUNDS", app: "r_sounds.html" },
+                "brain_break": { label: "BRAIN_BREAK", app: "break.html" },                 
+
+            "meditation": { label: "MEDITATION", app: "meditation.html" },
+
+            // Finance Submodules
+            "budget": { label: "BUDGET", app: "f_budget.html" },
+            "goals": { label: "GOALS", app: "f_goals.html" },
+            "wishlist": { label: "WISHLIST", app: "f_wishlist.html" },
+
+            // Archive Submodules
+            "a_recipes": { label: "RECIPES", app: "i_archive.html" },
+            "a_workouts": { label: "WORKOUTS", app: "i_archive.html" },
+            "playlists": { label: "PLAYLISTS", app: "media.html" }
+        };
+
+        let currentLevel = "root";
+        let history = [];
+
+        function renderSystem() {
+            const container = document.getElementById('system-container');
+            const data = treeData[currentLevel];
+            
+            // Build Breadcrumb string
+            let bPath = ["SYSTEM_ROOT"];
+            if(history.length > 0) bPath = bPath.concat(history.slice(1).map(h => treeData[h].label));
+            if(currentLevel !== "root") bPath.push(data.label);
+            document.getElementById('breadcrumb').innerText = bPath.join(" // ");
+            
+            container.innerHTML = "";
+
+            // Render Core Node
+            const core = document.createElement('div');
+            core.className = "core-node";
+            if (history.length > 0) {
+                core.innerHTML = `<span>◄ RETURN</span><div style="font-size:0.5rem;opacity:0.6;margin-top:5px;">${data.label}</div>`;
+                core.onclick = (e) => { e.stopPropagation(); goBack(); };
+            } else {
+                core.innerHTML = `<span>${data.label}</span>`;
+                // If it's the root node, clicking the center allows forward navigation
+                if (data.centerClick) {
+                    core.onclick = (e) => { e.stopPropagation(); zoomTransition(data.centerClick); };
+                }
+            }
+            container.appendChild(core);
+
+            if (!data.branches) return;
+
+            // Render Orbiting Satellites
+            const wrapper = document.createElement('div');
+            wrapper.className = "orbit-wrapper";
+            const angleStep = 360 / data.branches.length;
+            const radius = 180;
+
+            data.branches.forEach((branchKey, index) => {
+                const branch = treeData[branchKey] || { label: branchKey.toUpperCase() };
+                const angle = index * angleStep;
+                
+                const line = document.createElement('div');
+                line.className = "connector";
+                line.style.width = `${radius}px`;
+                line.style.transform = `rotate(${angle}deg)`;
+                wrapper.appendChild(line);
+
+                const sat = document.createElement('div');
+                sat.className = "satellite";
+                const x = radius * Math.cos(angle * Math.PI / 180);
+                const y = radius * Math.sin(angle * Math.PI / 180);
+                sat.style.left = `calc(50% + ${x}px - 32.5px)`;
+                sat.style.top = `calc(50% + ${y}px - 32.5px)`;
+                sat.innerHTML = `<div class="sat-label">${branch.label}</div>`;
+                
+                sat.onclick = (e) => {
+                    e.stopPropagation();
+                    if (branch.app) launchApp(branch.app);
+                    else zoomTransition(branchKey);
+                };
+                wrapper.appendChild(sat);
+            });
+            container.appendChild(wrapper);
+        }
+
+        function zoomTransition(nextId) {
+            playSfx('sfx-loading');
+            const viewport = document.getElementById('hub-viewport');
+            viewport.style.transform = "scale(3)";
+            viewport.style.opacity = "0";
+            setTimeout(() => {
+                history.push(currentLevel);
+                currentLevel = nextId;
+                renderSystem();
+                viewport.style.transform = "scale(0.5)";
+                setTimeout(() => { viewport.style.opacity = "1"; viewport.style.transform = "scale(1)"; }, 50);
+            }, 400);
+        }
+
+        function goBack() {
+            playSfx('sfx-return');
+            const viewport = document.getElementById('hub-viewport');
+            viewport.style.transform = "scale(0.2)";
+            viewport.style.opacity = "0";
+            setTimeout(() => {
+                currentLevel = history.pop();
+                renderSystem();
+                viewport.style.transform = "scale(2)";
+                setTimeout(() => { viewport.style.opacity = "1"; viewport.style.transform = "scale(1)"; }, 50);
+            }, 400);
+        }
+
+        // --- APP LAUNCHER ---
+        function launchApp(url) {
+            if(url === "#") return alert("SYS_ERROR: MODULE_NOT_COMPILED.");
+            playSfx('sfx-loading');
+            document.getElementById('app-frame').src = url;
+            document.getElementById('app-overlay').style.display = "flex";
+        }
+
+        window.closeApp = function() {
+            playSfx('sfx-return');
+            document.getElementById('app-overlay').style.display = "none";
+            document.getElementById('app-frame').src = "";
+        }
+    </script>
+</body>
+</html>

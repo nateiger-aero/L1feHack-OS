@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // PROGRESS_TRACKING</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --neon-warn: #f39c12;
+            --neon-success: #2ecc71;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 950px; margin: 0 auto; border: 1px solid var(--neon-cyan); 
+            background: rgba(0, 10, 15, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        }
+
+        header { border-bottom: 2px solid var(--neon-cyan); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        .btn-return { background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: 0.3s; }
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: rgba(0, 229, 255, 0.02); border: 1px solid var(--neon-dim); padding: 20px; position: relative; }
+        
+        h2 { font-size: 0.8rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin: 0 0 15px 0; color: var(--neon-cyan); letter-spacing: 1px; }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; margin-bottom: 5px; margin-top: 15px; }
+        
+        input { background: #000; border: 1px solid var(--neon-dim); color: #fff; padding: 10px; font-family: inherit; outline: none; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; }
+
+        /* Progress Visuals */
+        .telemetry-readout { font-size: 2.5rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px var(--neon-cyan); margin: 10px 0; }
+        .telemetry-sub { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px; }
+        
+        .progress-bar-bg { width: 100%; height: 15px; background: #111; border: 1px solid var(--neon-dim); margin-top: 10px; position: relative; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--neon-cyan); width: 0%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--neon-cyan); }
+        .progress-markers { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--text-dim); margin-top: 5px; font-weight: bold; }
+
+        /* Checklist Styles */
+        .check-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-dim); margin-bottom: 10px; transition: 0.3s; cursor: pointer; }
+        .check-item:hover { border-color: var(--neon-cyan); background: rgba(0,229,255,0.05); }
+        .check-item.completed { border-color: var(--neon-success); background: rgba(46,204,113,0.1); color: var(--neon-success); }
+        .check-box { width: 18px; height: 18px; border: 1px solid var(--neon-cyan); display: flex; justify-content: center; align-items: center; font-size: 0.8rem; font-weight: bold; color: transparent; transition: 0.2s; }
+        .check-item.completed .check-box { border-color: var(--neon-success); color: var(--neon-success); text-shadow: 0 0 5px var(--neon-success); }
+        .check-label { font-size: 0.8rem; font-weight: bold; letter-spacing: 1px; }
+
+        .btn-commit { width: 100%; padding: 15px; background: none; border: 2px solid var(--neon-success); color: var(--neon-success); cursor: pointer; font-weight: bold; letter-spacing: 5px; margin-top: 20px; font-family: inherit; font-size: 0.9rem; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: 0.3s; }
+        .btn-commit:hover { background: var(--neon-success); color: black; box-shadow: 0 0 25px var(--neon-success); }
+
+        /* Streak Tracker */
+        .streak-container { display: flex; gap: 5px; margin-top: 15px; }
+        .streak-day { flex: 1; height: 8px; background: #111; border: 1px solid #333; }
+        .streak-day.active { background: var(--neon-cyan); border-color: var(--neon-cyan); box-shadow: 0 0 5px var(--neon-cyan); }
+
+        #errorOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container" style="position: relative;">
+    
+    <div id="errorOverlay">
+        <h2 style="border:none; color:var(--neon-warn); font-size: 1.5rem;">[ DATA_NOT_FOUND ]</h2>
+        <p style="font-size: 0.8rem; color: var(--text-dim);">No active targets found in the archive.<br>Please configure SYS_HEALTH // TARGET_ACQUISITION.</p>
+        <button class="btn-return" style="margin-top: 20px;" onclick="window.parent.closeApp()">RETURN TO HUB</button>
+    </div>
+
+    <header>
+        <h1>SYS_HEALTH // PROGRESS_TRACKING</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <div class="grid-layout">
+        
+        <div class="column">
+            <div class="panel">
+                <h2>01_BIOMETRIC_TELEMETRY</h2>
+                
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>STARTING_WEIGHT (LBS):</label>
+                        <input type="number" id="wStart" value="0" onchange="calculateProgress()">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>CURRENT_WEIGHT (LBS):</label>
+                        <input type="number" id="wCurrent" value="0" onchange="calculateProgress()">
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <span class="telemetry-sub">TRAJECTORY_PROGRESS</span>
+                        <span id="wPercent" style="font-weight: bold; color: var(--neon-cyan);">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="wBar"></div>
+                    </div>
+                    <div class="progress-markers">
+                        <span id="wStartLbl">START: 0</span>
+                        <span id="wTargetLbl" style="color: var(--neon-cyan);">TARGET: 0</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 1px solid var(--neon-dim); padding-top: 20px; text-align: center;">
+                    <div class="telemetry-sub">TEMPORAL_DEADLINE_COUNTDOWN</div>
+                    <div class="telemetry-readout" id="tDaysLeft">00</div>
+                    <div style="font-size: 0.6rem; color: var(--text-dim);">DAYS REMAINING</div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>02_CYCLE_CONSISTENCY</h2>
+                <div class="telemetry-sub">PAST_7_DAYS_COMPLIANCE</div>
+                <div class="streak-container" id="streakGrid">
+                    </div>
+                <p style="font-size: 0.6rem; color: #555; margin-top: 10px; text-align: center;">(Data syncs upon daily log commit)</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <div class="panel">
+                <h2>03_DAILY_PROTOCOL_COMPLIANCE</h2>
+                <div class="telemetry-sub" style="margin-bottom: 15px;" id="currentDateDisplay">DATE_STRING</div>
+                
+                <div id="checklistContainer">
+                    </div>
+
+                <button class="btn-commit" onclick="commitDailyLog()">SYNC_DAILY_DATA</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let activeGoal = null;
+
+    // --- INITIALIZATION ---
+    function initProgressModule() {
+        // Set Date
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('currentDateDisplay').innerText = `[ ${today.toUpperCase()} ]`;
+
+        // Load Goals
+        const archive = JSON.parse(localStorage.getItem('wos_health_goals')) || [];
+        if (archive.length === 0) {
+            document.getElementById('errorOverlay').style.display = "flex";
+            return;
+        }
+
+        // Get the most recent goal profile
+        activeGoal = archive[archive.length - 1];
+        
+        // Load existing starting/current weight from local storage if available
+        const savedProgress = JSON.parse(localStorage.getItem('wos_progress_data')) || { start: activeGoal.biometrics.targetWeight, current: activeGoal.biometrics.targetWeight };
+        document.getElementById('wStart').value = savedProgress.start;
+        document.getElementById('wCurrent').value = savedProgress.current;
+
+        calculateProgress();
+        generateChecklist();
+        renderStreak();
+    }
+
+    // --- BIOMETRICS & MATH ---
+    function calculateProgress() {
+        if(!activeGoal) return;
+
+        const start = parseFloat(document.getElementById('wStart').value);
+        const current = parseFloat(document.getElementById('wCurrent').value);
+        const target = parseFloat(activeGoal.biometrics.targetWeight);
+
+        document.getElementById('wStartLbl').innerText = `START: ${start} LBS`;
+        document.getElementById('wTargetLbl').innerText = `TARGET: ${target} LBS`;
+
+        // Save current inputs
+        localStorage.setItem('wos_progress_data', JSON.stringify({ start, current }));
+
+        // Progress Math (handles both gaining and losing weight)
+        let percent = 0;
+        if (start !== target) {
+            const totalDiff = Math.abs(start - target);
+            const currentDiff = Math.abs(start - current);
+            percent = (currentDiff / totalDiff) * 100;
+            
+            // Cap at 100% and floor at 0%
+            if (percent > 100) percent = 100;
+            if (percent < 0 || isNaN(percent)) percent = 0;
+            
+            // Check if went wrong direction
+            if ((start > target && current > start) || (start < target && current < start)) {
+                percent = 0; 
+            }
+        } else {
+            percent = 100;
+        }
+
+        document.getElementById('wPercent').innerText = `${Math.round(percent)}%`;
+        document.getElementById('wBar').style.width = `${percent}%`;
+
+        // Date Math
+        const today = new Date();
+        const deadline = new Date(activeGoal.biometrics.deadline);
+        const timeDiff = deadline.getTime() - today.getTime();
+        const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        const daysDisplay = document.getElementById('tDaysLeft');
+        if (isNaN(daysLeft) || daysLeft < 0) {
+            daysDisplay.innerText = "EXP";
+            daysDisplay.style.color = "var(--neon-warn)";
+        } else {
+            daysDisplay.innerText = daysLeft.toString().padStart(2, '0');
+        }
+    }
+
+    // --- CHECKLIST GENERATOR ---
+    function generateChecklist() {
+        const container = document.getElementById('checklistContainer');
+        container.innerHTML = "";
+
+        // Helper to build a task row
+        const buildTask = (id, label) => {
+            return `
+                <div class="check-item" id="task-${id}" onclick="toggleCheck(this)">
+                    <div class="check-box">X</div>
+                    <div class="check-label">${label}</div>
+                </div>
+            `;
+        };
+
+        // 1. Hydration
+        if(activeGoal.recovery.waterOz) {
+            container.innerHTML += buildTask('water', `HYDRATION: Consume ${activeGoal.recovery.waterOz} oz`);
+        }
+        // 2. Sleep
+        if(activeGoal.recovery.sleepHours) {
+            container.innerHTML += buildTask('sleep', `RECOVERY: Achieve ${activeGoal.recovery.sleepHours} hrs sleep`);
+        }
+        // 3. Kinetics
+        if(activeGoal.kinetics.durationMinutes) {
+            container.innerHTML += buildTask('kinetic', `KINETICS: ${activeGoal.kinetics.durationMinutes} min activity session`);
+        }
+        // 4. Behaviors / Habits
+        if(activeGoal.behaviors && activeGoal.behaviors.length > 0) {
+            activeGoal.behaviors.forEach((b, index) => {
+                container.innerHTML += buildTask(`habit-${index}`, `PROTOCOL [${b.type}]: ${b.name}`);
+            });
+        }
+
+        // Check if today is already logged
+        const todayStr = new Date().toISOString().split("T")[0];
+        const logHistory = JSON.parse(localStorage.getItem('wos_daily_logs')) || {};
+        
+        if(logHistory[todayStr]) {
+            document.querySelectorAll('.check-item').forEach(item => item.classList.add('completed'));
+        }
+    }
+
+    function toggleCheck(element) {
+        element.classList.toggle('completed');
+    }
+
+    // --- SYNC & STREAK LOGIC ---
+    function commitDailyLog() {
+        const items = document.querySelectorAll('.check-item');
+        const completedItems = document.querySelectorAll('.check-item.completed');
+        
+        // Ensure all are checked for a "successful" day
+        if (completedItems.length < items.length) {
+            const proceed = confirm("WARNING: Not all protocols are marked complete. Sync partial data anyway?");
+            if(!proceed) return;
+        }
+
+        const todayStr = new Date().toISOString().split("T")[0];
+        let logHistory = JSON.parse(localStorage.getItem('wos_daily_logs')) || {};
+        
+        // Save today as true
+        logHistory[todayStr] = true;
+        localStorage.setItem('wos_daily_logs', JSON.stringify(logHistory));
+
+        renderStreak();
+        alert("[ SYNC SUCCESSFUL ]\nDaily compliance data secured in the mainframe.");
+    }
+
+    function renderStreak() {
+        const grid = document.getElementById('streakGrid');
+        grid.innerHTML = "";
+        
+        const logHistory = JSON.parse(localStorage.getItem('wos_daily_logs')) || {};
+        const today = new Date();
+
+        // Check the last 7 days
+        for(let i = 6; i >= 0; i--) {
+            const checkDate = new Date(today);
+            checkDate.setDate(today.getDate() - i);
+            const dateStr = checkDate.toISOString().split("T")[0];
+            
+            const isCompleted = logHistory[dateStr] === true;
+            grid.innerHTML += `<div class="streak-day ${isCompleted ? 'active' : ''}" title="${dateStr}"></div>`;
+        }
+    }
+
+    // Boot
+    initProgressModule();
+</script>
+</body>
+</html>
