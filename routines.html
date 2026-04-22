@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // ROUTINE_MATRIX</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --neon-warn: #f39c12;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 1000px; margin: 0 auto; border: 1px solid var(--neon-cyan); 
+            background: rgba(0, 10, 15, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        }
+
+        header { border-bottom: 2px solid var(--neon-cyan); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        .btn-return { 
+            background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); 
+            padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); 
+            transition: 0.3s; 
+        }
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* Navigation Tabs */
+        .tab-nav { display: flex; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--neon-dim); margin-top: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: var(--text-dim); cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; letter-spacing: 2px; transition: 0.3s; }
+        .tab-btn.active { color: var(--neon-cyan); border-bottom: 3px solid var(--neon-cyan); background: rgba(0, 229, 255, 0.1); }
+        .tab-content { display: none; padding: 20px 0; animation: slide-in 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { font-size: 0.9rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin: 20px 0 15px 0; color: var(--neon-cyan); }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
+        
+        input, select { background: #000; border: 1px solid var(--neon-dim); color: #fff; padding: 8px; font-family: inherit; outline: none; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+
+        /* The 7-Day Matrix Grid */
+        .matrix-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 10px; }
+        .day-card { border: 1px solid var(--neon-dim); background: rgba(0,0,0,0.6); padding: 10px; text-align: center; transition: 0.3s; position: relative; }
+        .day-card.active { border-color: var(--neon-cyan); background: rgba(0, 229, 255, 0.05); }
+        .day-header { font-weight: bold; color: var(--text-dim); margin-bottom: 10px; border-bottom: 1px solid var(--neon-dim); padding-bottom: 5px; }
+        .day-card.active .day-header { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+        
+        /* Lock & Toggle Buttons */
+        .cyber-check { display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; font-size: 0.6rem; color: var(--text-primary); margin-top: 10px; }
+        .cyber-check input { width: auto; margin: 0; }
+        .btn-toggle-day { background: none; border: 1px solid var(--neon-dim); color: var(--text-dim); padding: 5px; width: 100%; cursor: pointer; font-size: 0.6rem; font-family: inherit; margin-bottom: 10px; }
+        .day-card.active .btn-toggle-day { background: var(--neon-cyan); color: black; border-color: var(--neon-cyan); font-weight: bold; }
+
+        /* UI Containers */
+        .panel { background: rgba(0, 229, 255, 0.02); border: 1px solid var(--neon-dim); padding: 15px; margin-bottom: 15px; }
+        .flex-row { display: flex; gap: 15px; align-items: flex-end; }
+        
+        .action-btn { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 10px 15px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
+        .action-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+        
+        .btn-commit { width: 100%; padding: 15px; background: none; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); cursor: pointer; font-weight: bold; letter-spacing: 5px; margin-top: 20px; font-family: inherit; font-size: 0.9rem; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: 0.3s; }
+        .btn-commit:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 25px var(--neon-cyan); }
+        .btn-warn { border-color: var(--neon-warn); color: var(--neon-warn); }
+        .btn-warn:hover { background: var(--neon-warn); color: black; box-shadow: 0 0 20px var(--neon-warn); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_ROUTINES // ALGORITHM_BUILDER</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('matrix')">01_SCHEDULE_MATRIX</button>
+        <button class="tab-btn" onclick="switchTab('protocols')">02_CORE_PROTOCOLS</button>
+        <button class="tab-btn" onclick="switchTab('aux')">03_AUXILIARY_TASKS</button>
+        <button class="tab-btn" onclick="switchTab('presets')">04_ARCHIVE_PRESETS</button>
+    </div>
+
+    <div id="matrix" class="tab-content active">
+        <h2>GLOBAL_ROTATION_SETTINGS</h2>
+        <div class="panel flex-row">
+            <div style="flex: 1;">
+                <label class="cyber-check" style="justify-content: flex-start; font-size: 0.8rem;">
+                    <input type="checkbox" id="enableRotation" checked> ENABLE_CYCLE_ROTATION
+                </label>
+                <p style="font-size: 0.6rem; color: var(--text-dim); margin-top: 5px;">Shifts unlocked workout types forward by 1 interval each week.</p>
+            </div>
+            <div style="flex: 1;">
+                <label>BASE_CYCLE_PATTERN:</label>
+                <input type="text" value="PUSH, PULL, LEGS" disabled style="opacity: 0.6; text-align: center;">
+            </div>
+        </div>
+
+        <h2>7-DAY_DEPLOYMENT_GRID</h2>
+        <div class="matrix-grid" id="weekGrid">
+            </div>
+    </div>
+
+    <div id="protocols" class="tab-content">
+        <h2>PROTOCOL_CONFIGURATOR</h2>
+        <div class="panel flex-row">
+            <div style="flex: 1;">
+                <label>SELECT_TARGET_BLOCK:</label>
+                <select id="protocolSelect">
+                    <option value="PUSH">PUSH_PROTOCOL</option>
+                    <option value="PULL">PULL_PROTOCOL</option>
+                    <option value="LEGS">LEGS_PROTOCOL</option>
+                </select>
+            </div>
+        </div>
+
+        <h2>RNG_VARIANCE_ENGINE</h2>
+        <div class="panel">
+            <label class="cyber-check" style="justify-content: flex-start;">
+                <input type="checkbox" id="rndEnable" onchange="toggleRandomizer()"> OVERRIDE_WITH_RNG_SELECTION
+            </label>
+            
+            <div id="rndSettings" style="display: none; margin-top: 15px; border-top: 1px solid var(--neon-dim); padding-top: 15px;">
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>VOLUME_RANGE (MIN to MAX):</label>
+                        <div style="display: flex; gap: 5px; align-items: center;">
+                            <input type="number" value="3" min="1" id="rndMin"> <span style="color:var(--text-dim)">TO</span> <input type="number" value="5" min="1" id="rndMax">
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="cyber-check" style="justify-content: flex-start; margin-top: 20px;">
+                            <input type="checkbox" id="rndRecurring"> RECURRING_VARIANCE
+                        </label>
+                        <p style="font-size:0.6rem; color:var(--text-dim); margin: 0 0 0 20px;">Regenerates list dynamically per session.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>STATIC_EXERCISE_ROSTER</h2>
+        <div class="panel" id="staticBuilder">
+            <p style="font-size: 0.7rem; color: var(--text-dim);">[ DB_LINK REQUIRED: Select exercises from /workouts archive. ]</p>
+            <button class="action-btn" onclick="alert('Feature linked to DB.')">+ INJECT_WORKOUT</button>
+        </div>
+    </div>
+
+    <div id="aux" class="tab-content">
+        <h2>FIXED_AUXILIARY_TASKS</h2>
+        <div class="panel flex-row">
+            <div style="flex: 2;">
+                <label>EXERCISE_NAME (e.g. ABS 10 MIN):</label>
+                <input type="text" placeholder="INPUT_NAME">
+            </div>
+            <div style="flex: 1;">
+                <label>EXECUTION_ORDER:</label>
+                <input type="number" value="1" min="1">
+            </div>
+        </div>
+        <div class="panel">
+            <label>BIND_TO_DAYS:</label>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <label class="cyber-check"><input type="checkbox"> M</label>
+                <label class="cyber-check"><input type="checkbox"> T</label>
+                <label class="cyber-check"><input type="checkbox"> W</label>
+                <label class="cyber-check"><input type="checkbox"> TH</label>
+                <label class="cyber-check"><input type="checkbox"> F</label>
+                <label class="cyber-check"><input type="checkbox"> S</label>
+                <label class="cyber-check"><input type="checkbox"> SU</label>
+            </div>
+            <button class="action-btn" style="margin-top: 15px;">+ BIND_TASK</button>
+        </div>
+    </div>
+
+    <div id="presets" class="tab-content">
+        <h2>ARCHIVE_MANAGEMENT</h2>
+        <div class="panel">
+            <label>CURRENT_CONFIGURATION_STATE:</label>
+            <input type="text" placeholder="NAME_PRESET (e.g. HYPERTROPHY_ROTATION_A)">
+            <button class="btn-commit">SAVE_AS_NEW_PRESET</button>
+        </div>
+        <div class="panel">
+            <label>STORED_PRESETS:</label>
+            <select>
+                <option>NO_PRESETS_FOUND</option>
+            </select>
+            <button class="btn-commit btn-warn" style="margin-top: 10px;">LOAD_SELECTED_PRESET</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- TAB NAVIGATION ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- DAY MATRIX GENERATOR ---
+    const days = [
+        { id: "mon", label: "MON", active: true, type: "PUSH", locked: false },
+        { id: "tue", label: "TUE", active: true, type: "PULL", locked: false },
+        { id: "wed", label: "WED", active: true, type: "LEGS", locked: false },
+        { id: "thu", label: "THU", active: false, type: "REST", locked: true }, // Default rest day
+        { id: "fri", label: "FRI", active: true, type: "PUSH", locked: false },
+        { id: "sat", label: "SAT", active: false, type: "REST", locked: true },
+        { id: "sun", label: "SUN", active: false, type: "REST", locked: true }
+    ];
+
+    function renderMatrix() {
+        const grid = document.getElementById('weekGrid');
+        grid.innerHTML = "";
+
+        days.forEach((day, index) => {
+            const card = document.createElement('div');
+            card.className = `day-card ${day.active ? 'active' : ''}`;
+            
+            card.innerHTML = `
+                <div class="day-header">${day.label}</div>
+                <button class="btn-toggle-day" onclick="toggleDay(${index})">${day.active ? 'ACTIVE' : 'REST'}</button>
+                
+                <select style="font-size: 0.6rem; padding: 4px; display: ${day.active ? 'block' : 'none'};">
+                    <option value="PUSH" ${day.type === 'PUSH' ? 'selected' : ''}>PUSH</option>
+                    <option value="PULL" ${day.type === 'PULL' ? 'selected' : ''}>PULL</option>
+                    <option value="LEGS" ${day.type === 'LEGS' ? 'selected' : ''}>LEGS</option>
+                    <option value="REST" ${day.type === 'REST' ? 'selected' : ''}>REST</option>
+                </select>
+
+                <label class="cyber-check" style="opacity: ${day.active ? '1' : '0.5'};">
+                    <input type="checkbox" ${day.locked ? 'checked' : ''}> LOCK_TYPE
+                </label>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function toggleDay(index) {
+        days[index].active = !days[index].active;
+        if (!days[index].active) {
+            days[index].type = "REST";
+            days[index].locked = true; // Auto-lock rest days by default
+        } else {
+            days[index].type = "PUSH"; // Default back to push
+            days[index].locked = false;
+        }
+        renderMatrix();
+    }
+
+    // --- RNG TOGGLES ---
+    function toggleRandomizer() {
+        const isEnabled = document.getElementById('rndEnable').checked;
+        document.getElementById('rndSettings').style.display = isEnabled ? 'block' : 'none';
+        
+        // Visual cue: Dim the static builder if RNG is taking over
+        document.getElementById('staticBuilder').style.opacity = isEnabled ? '0.3' : '1';
+        document.getElementById('staticBuilder').style.pointerEvents = isEnabled ? 'none' : 'auto';
+    }
+
+    // Initialize 
+    renderMatrix();
+</script>
+</body>
+</html>

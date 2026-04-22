@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // BIO_DISTRIBUTION</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            /* Lighter accent for text readability */
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --neon-alert: #ff5555;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+
+        .module-box {
+            background: rgba(0, 15, 20, 0.95); border: 1px solid var(--neon-cyan);
+            padding: 25px; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+        }
+
+        header { grid-column: 1 / -1; border-bottom: 2px solid var(--neon-cyan); padding-bottom: 10px; margin-bottom: 10px; }
+        header h1 { margin: 0; font-size: 1.3rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        h2 { font-size: 1rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin-bottom: 25px; color: var(--neon-cyan); }
+
+        label { display: block; margin-top: 15px; font-size: 0.8rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; }
+        
+        input, select { 
+            width: 100%; padding: 12px; margin-top: 5px; background: #0a1a20; border: 1px solid var(--neon-dim); 
+            color: #fff; font-family: inherit; outline: none; box-sizing: border-box; font-size: 1rem;
+        }
+        input:focus, select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 12px var(--neon-dim); }
+
+        .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+        .toggle-btn { 
+            flex: 1; padding: 12px; background: rgba(0,0,0,0.6); border: 1px solid var(--neon-dim); 
+            color: var(--text-dim); cursor: pointer; font-size: 0.75rem; font-weight: bold; font-family: inherit;
+        }
+        .toggle-btn.active { border-color: var(--neon-cyan); color: var(--neon-cyan); background: rgba(0, 229, 255, 0.15); box-shadow: 0 0 10px var(--neon-dim); }
+
+        /* Results Display */
+        .result-val { font-size: 2.5rem; font-weight: bold; color: #fff; text-shadow: 0 0 15px var(--neon-cyan); }
+        .macro-bar-container { height: 12px; background: #111; margin-top: 10px; display: flex; border: 1px solid #333; }
+        .macro-segment { height: 100%; transition: width 0.5s ease-in-out; }
+
+        .btn-commit {
+            grid-column: 1 / -1; padding: 18px; background: none; border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan); cursor: pointer; font-weight: bold; letter-spacing: 6px;
+            margin-top: 15px; font-family: inherit; font-size: 1rem;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            transition: 0.3s;
+        }
+        .btn-commit:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 25px var(--neon-cyan); }
+
+        .warning { color: var(--neon-alert); font-size: 0.7rem; margin-top: 8px; font-weight: bold; display: none; text-shadow: 0 0 5px var(--neon-alert); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header><h1>SYS_BIO // MACRO_ALGORITHM_V2.1</h1></header>
+
+    <div class="module-box">
+        <h2>01_BIOMETRIC_DATA</h2>
+        <div class="form-row" style="display: flex; gap: 10px;">
+            <div style="flex:1">
+                <label>SEX:</label>
+                <select id="bioSex"><option value="male">MALE</option><option value="female">FEMALE</option></select>
+            </div>
+            <div style="flex:1">
+                <label>AGE:</label>
+                <input type="number" id="bioAge" value="21">
+            </div>
+        </div>
+        
+        <label>HEIGHT_INPUT:</label>
+        <div class="form-row" style="display: flex; gap: 10px;">
+            <div style="flex:1; position: relative;">
+                <input type="number" id="bioHeightFt" value="5">
+                <span style="position: absolute; right: 10px; top: 42px; font-size: 0.6rem; color: var(--neon-cyan);">FT</span>
+            </div>
+            <div style="flex:1; position: relative;">
+                <input type="number" id="bioHeightIn" value="10">
+                <span style="position: absolute; right: 10px; top: 42px; font-size: 0.6rem; color: var(--neon-cyan);">IN</span>
+            </div>
+        </div>
+
+        <label>START_WEIGHT (lb):</label>
+        <input type="number" id="bioWeight" value="180">
+
+        <h2 style="margin-top:35px;">02_TRAJECTORY</h2>
+        <label>GOAL_MODE:</label>
+        <div class="btn-group">
+            <button class="toggle-btn" onclick="setGoal('cut')">DECREASE</button>
+            <button class="toggle-btn active" onclick="setGoal('maintain')">MAINTAIN</button>
+            <button class="toggle-btn" onclick="setGoal('bulk')">INCREASE</button>
+        </div>
+
+        <div id="targetWeightSection" style="display:none;">
+            <label>TARGET_WEIGHT (lb):</label>
+            <input type="number" id="targetWeight" value="170">
+            <label>WEEKLY_RATE (lb/week):</label>
+            <select id="weeklyRate">
+                <option value="0.25">0.25 (OPTIMIZED)</option>
+                <option value="0.5">0.50 (BALANCED)</option>
+                <option value="1">1.00 (AGGRESSIVE)</option>
+                <option value="1.5">1.50 (EXTREME)</option>
+            </select>
+            <div id="rateWarning" class="warning">! INTENSE METABOLIC LOAD DETECTED !</div>
+        </div>
+
+        <h2 style="margin-top:35px;">03_KINETIC_INDEX</h2>
+        <label>ACTIVITY_LEVEL:</label>
+        <select id="activityLevel">
+            <option value="1.2">SEDENTARY (Office/Minimal)</option>
+            <option value="1.375">LIGHT (1-3 days/week)</option>
+            <option value="1.55">MODERATE (3-5 days/week)</option>
+            <option value="1.725">HEAVY (6-7 days/week)</option>
+            <option value="1.9">ELITE (Daily/Physical Job)</option>
+        </select>
+    </div>
+
+    <div class="module-box">
+        <h2>04_ALLOCATION_PRESETS</h2>
+        <div class="btn-group">
+            <button class="toggle-btn active" onclick="setPreset('balanced')">BALANCED</button>
+            <button class="toggle-btn" onclick="setPreset('highProtein')">HIGH_PRO</button>
+            <button class="toggle-btn" onclick="setPreset('keto')">LOW_CARB</button>
+        </div>
+
+        <h2 style="margin-top:35px;">05_OUTPUT_STREAM</h2>
+        <label>DAILY_CALORIC_LIMIT:</label>
+        <div class="result-val" id="resCalories">2400</div>
+        <div style="font-size: 0.7rem; color: var(--text-dim); font-weight: bold;">KCAL / 24HR CYCLE</div>
+
+        <div style="margin-top: 35px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight: bold;">
+                <span>PROTEIN</span><span id="labelPro">0g (0%)</span>
+            </div>
+            <div class="macro-bar-container"><div id="barPro" class="macro-segment" style="background:#00e5ff; box-shadow: 0 0 10px #00e5ff;"></div></div>
+
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight: bold; margin-top:20px;">
+                <span>CARBS</span><span id="labelCarb">0g (0%)</span>
+            </div>
+            <div class="macro-bar-container"><div id="barCarb" class="macro-segment" style="background:#2ecc71; box-shadow: 0 0 10px #2ecc71;"></div></div>
+
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight: bold; margin-top:20px;">
+                <span>FATS</span><span id="labelFat">0g (0%)</span>
+            </div>
+            <div class="macro-bar-container"><div id="barFat" class="macro-segment" style="background:#f1c40f; box-shadow: 0 0 10px #f1c40f;"></div></div>
+        </div>
+
+        <div style="margin-top: 35px; border-top: 1px solid var(--neon-dim); padding-top: 15px;">
+            <label>PROJECTED_TIMELINE:</label>
+            <div id="resTimeline" style="font-size: 1rem; color: #fff; font-weight: bold; letter-spacing: 1px;">STABLE STATE</div>
+        </div>
+    </div>
+
+    <button class="btn-commit" onclick="calculateAll()">EXECUTE_CALCULATION</button>
+</div>
+
+<script src="macros-app.js"></script>
+</body>
+</html>

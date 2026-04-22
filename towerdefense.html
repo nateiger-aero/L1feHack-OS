@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // SPECTRAL_DEFENSE</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            --text-dark: #2c3e50;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-purple: #9b59b6;
+            --accent-red: #e74c3c;
+            --accent-dark: #2c3e50;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body { 
+            font-family: var(--font-main); background: var(--bg-gradient); color: var(--text-dark); 
+            margin: 0; padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent-purple); background: rgba(255,255,255,0.9); flex-shrink: 0; border-radius: 10px 10px 0 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--accent-purple); text-transform: uppercase; }
+        .btn-return { background: none; border: 2px solid var(--accent-purple); color: var(--accent-purple); padding: 5px 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 20px; transition: 0.3s; text-transform: uppercase;}
+        .btn-return:hover { background: var(--accent-purple); color: white; box-shadow: 0 0 10px rgba(155, 89, 182, 0.4); }
+
+        .game-container { flex: 1; display: flex; justify-content: center; align-items: stretch; gap: 20px; min-height: 0; padding-top: 20px; padding-bottom: 20px;}
+
+        /* Controls / Shop */
+        .shop-panel { 
+            width: 260px; background: rgba(255, 255, 255, 0.9); border: 2px solid #e0e0e0; 
+            border-radius: 15px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+            display: flex; flex-direction: column; flex-shrink: 0;
+        }
+        
+        .stat-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;}
+        .stat-row span { color: var(--accent-purple); }
+
+        /* Scrollable Tower List */
+        .tower-list {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; 
+            padding-right: 5px; margin-bottom: 15px; margin-top: 10px;
+        }
+        
+        /* Custom Scrollbar for Tower List */
+        .tower-list::-webkit-scrollbar { width: 6px; }
+        .tower-list::-webkit-scrollbar-thumb { background: var(--accent-purple); border-radius: 3px; }
+
+        .tower-btn { 
+            background: #f8f9fa; border: 2px solid #bdc3c7; border-radius: 10px; padding: 15px 10px; 
+            display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; flex-shrink: 0;
+        }
+        .tower-btn:hover { border-color: var(--accent-purple); transform: translateY(-2px); }
+        .tower-btn.selected { border-color: var(--accent-purple); background: #f4ecf7; box-shadow: 0 4px 10px rgba(155, 89, 182, 0.2); }
+        .tower-icon { font-size: 2rem; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .tower-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; }
+        .tower-desc { font-size: 0.7rem; color: #7f8c8d; text-align: center; margin-bottom: 5px; }
+        .tower-cost { font-size: 0.85rem; font-weight: bold; color: var(--accent-green); }
+
+        /* The Machine */
+        .machine-housing {
+            flex: 1; position: relative; padding: 15px; background: #fff; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid #ddd;
+            display: flex; justify-content: center; align-items: center; height: 100%; box-sizing: border-box;
+        }
+
+        canvas { 
+            background: #1a1a2e; border-radius: 10px; border: 2px solid var(--accent-dark); 
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5); display: block;
+            width: 100%; height: 100%; object-fit: contain; cursor: crosshair;
+        }
+
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,0.9); border-radius: 20px; z-index: 10; }
+        .overlay-title { font-size: 2.5rem; color: var(--accent-purple); font-weight: bold; margin-bottom: 20px; letter-spacing: 3px; text-shadow: 0 4px 10px rgba(155, 89, 182, 0.2); text-align: center;}
+        .btn-start { background: var(--accent-purple); border: none; color: #fff; padding: 15px 40px; font-size: 1.2rem; cursor: pointer; transition: 0.3s; font-family: inherit; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border-radius: 30px; box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);}
+        .btn-start:hover { transform: translateY(-3px); background: #8e44ad; box-shadow: 0 8px 20px rgba(155, 89, 182, 0.4); }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BREAK // SPECTRAL_DEFENSE</h1>
+    <button class="btn-return" onclick="window.location.href='break.html'">◄ PLAZA</button>
+</header>
+
+<div class="game-container">
+    
+    <div class="shop-panel">
+        <div class="stat-row">ECTOPLASM: <span id="ectoDisplay" style="color:var(--accent-green)">250</span></div>
+        <div class="stat-row">MANSION HP: <span id="hpDisplay" style="color:var(--accent-red)">100</span></div>
+        <div class="stat-row">WAVE: <span id="waveDisplay">1</span></div>
+
+        <div style="font-size: 0.8rem; color: #7f8c8d; text-align: center; margin-top: 5px; font-weight: bold;">SUMMON DEFENDERS</div>
+
+        <div class="tower-list">
+            <div class="tower-btn" id="btn-poltergeist" onclick="selectTower('poltergeist')">
+                <div class="tower-icon">👻</div>
+                <div class="tower-name">POLTERGEIST</div>
+                <div class="tower-desc">Standard ranged thrower.</div>
+                <div class="tower-cost">100 Ectoplasm</div>
+            </div>
+
+            <div class="tower-btn" id="btn-banshee" onclick="selectTower('banshee')">
+                <div class="tower-icon">😱</div>
+                <div class="tower-name">BANSHEE</div>
+                <div class="tower-desc">Short range, rapid wail area damage.</div>
+                <div class="tower-cost">250 Ectoplasm</div>
+            </div>
+
+            <div class="tower-btn" id="btn-specter" onclick="selectTower('specter')">
+                <div class="tower-icon">💀</div>
+                <div class="tower-name">SPECTER</div>
+                <div class="tower-desc">Long range, slow heavy hits.</div>
+                <div class="tower-cost">400 Ectoplasm</div>
+            </div>
+        </div>
+        
+        <button class="btn-return" style="width: 100%; padding: 15px; border-color: var(--text-dark); color: var(--text-dark); flex-shrink: 0;" onclick="nextWave()">SEND WAVE</button>
+    </div>
+
+    <div class="machine-housing">
+        <div id="overlay">
+            <div class="overlay-title" id="ovTitle">MANSION_SECURE</div>
+            <button class="btn-start" id="btnStart" onclick="initGame()">COMMENCE_HAUNTING</button>
+        </div>
+        <canvas id="tdCanvas" width="800" height="600"></canvas>
+    </div>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('tdCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let state = 'START'; 
+    let animationId;
+    let ectoplasm = 250;
+    let mansionHp = 100;
+    let wave = 1;
+    let frameCount = 0;
+
+    let enemies = [];
+    let towers = [];
+    let projectiles = [];
+
+    const path = [
+        {x: 0, y: 100}, {x: 650, y: 100}, {x: 650, y: 300}, 
+        {x: 150, y: 300}, {x: 150, y: 500}, {x: 800, y: 500}
+    ];
+
+    const towerSpecs = {
+        poltergeist: { cost: 100, range: 120, damage: 10, cooldown: 30, icon: '👻', color: '#3498db' },
+        banshee: { cost: 250, range: 80, damage: 2, cooldown: 5, icon: '😱', color: '#e74c3c' },
+        specter: { cost: 400, range: 250, damage: 50, cooldown: 90, icon: '💀', color: '#9b59b6' }
+    };
+
+    let selectedTower = null;
+    let mouseX = 0; let mouseY = 0;
+    let enemiesToSpawn = 0;
+    let spawnTimer = 0;
+
+    function getMousePos(evt) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+            x: (evt.clientX - rect.left) * scaleX,
+            y: (evt.clientY - rect.top) * scaleY
+        };
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        let pos = getMousePos(e);
+        mouseX = pos.x; mouseY = pos.y;
+    });
+
+    canvas.addEventListener('click', (e) => {
+        if (state !== 'PLAY' && state !== 'WAITING') return;
+        if (!selectedTower) return;
+
+        let spec = towerSpecs[selectedTower];
+        if (ectoplasm >= spec.cost) {
+            towers.push({
+                x: mouseX, y: mouseY, 
+                type: selectedTower, 
+                cooldown: 0,
+                range: spec.range,
+                damage: spec.damage,
+                maxCooldown: spec.cooldown,
+                icon: spec.icon,
+                color: spec.color
+            });
+            ectoplasm -= spec.cost;
+            updateUI();
+            
+            selectedTower = null;
+            document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
+        }
+    });
+
+    function selectTower(type) {
+        if (ectoplasm < towerSpecs[type].cost) return; 
+        selectedTower = type;
+        document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById(`btn-${type}`).classList.add('selected');
+    }
+
+    function updateUI() {
+        document.getElementById('ectoDisplay').innerText = ectoplasm;
+        document.getElementById('hpDisplay').innerText = mansionHp;
+        document.getElementById('waveDisplay').innerText = wave;
+    }
+
+    function nextWave() {
+        if (enemiesToSpawn > 0 || enemies.length > 0) return; 
+        state = 'PLAY';
+        enemiesToSpawn = 5 + (wave * 3);
+        spawnTimer = 0;
+    }
+
+    class Enemy {
+        constructor() {
+            this.x = path[0].x;
+            this.y = path[0].y;
+            this.pathIndex = 0;
+            this.hp = 10 + (wave * 15);
+            this.maxHp = this.hp;
+            this.speed = 1.5 + (wave * 0.1);
+            this.reward = 5 + wave;
+            this.icon = '🔦'; 
+            if(Math.random() > 0.7) { this.icon = '✝️'; this.speed *= 0.8; this.hp *= 1.5; this.maxHp = this.hp; } 
+        }
+
+        update() {
+            if (this.pathIndex >= path.length - 1) return;
+
+            let target = path[this.pathIndex + 1];
+            let dx = target.x - this.x;
+            let dy = target.y - this.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < this.speed) {
+                this.x = target.x;
+                this.y = target.y;
+                this.pathIndex++;
+                if (this.pathIndex >= path.length - 1) {
+                    mansionHp -= 5;
+                    this.hp = 0; 
+                    updateUI();
+                    if (mansionHp <= 0) gameOver();
+                }
+            } else {
+                this.x += (dx / dist) * this.speed;
+                this.y += (dy / dist) * this.speed;
+            }
+        }
+
+        draw() {
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.icon, this.x, this.y);
+
+            ctx.fillStyle = 'red';
+            ctx.fillRect(this.x - 15, this.y - 20, 30, 4);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(this.x - 15, this.y - 20, 30 * (this.hp / this.maxHp), 4);
+        }
+    }
+
+    class Projectile {
+        constructor(x, y, target, damage, color) {
+            this.x = x; this.y = y;
+            this.target = target;
+            this.damage = damage;
+            this.speed = 8;
+            this.color = color;
+            this.active = true;
+        }
+
+        update() {
+            if (!this.target || this.target.hp <= 0) {
+                this.active = false; return;
+            }
+
+            let dx = this.target.x - this.x;
+            let dy = this.target.y - this.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < this.speed) {
+                this.target.hp -= this.damage;
+                if(this.target.hp <= 0 && this.target.reward) {
+                    ectoplasm += this.target.reward;
+                    this.target.reward = 0; 
+                    updateUI();
+                }
+                this.active = false;
+            } else {
+                this.x += (dx / dist) * this.speed;
+                this.y += (dy / dist) * this.speed;
+            }
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 4, 0, Math.PI*2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
+    }
+
+    function initGame() {
+        document.getElementById('overlay').style.display = 'none';
+        ectoplasm = 250;
+        mansionHp = 100;
+        wave = 1;
+        enemies = [];
+        towers = [];
+        projectiles = [];
+        enemiesToSpawn = 0;
+        selectedTower = null;
+        state = 'WAITING';
+        updateUI();
+        
+        if (animationId) cancelAnimationFrame(animationId);
+        gameLoop();
+    }
+
+    function gameOver() {
+        state = 'GAMEOVER';
+        const ov = document.getElementById('overlay');
+        ov.style.display = 'flex';
+        document.getElementById('ovTitle').innerText = "MANSION_EXORCISED";
+        document.getElementById('ovTitle').style.color = "var(--accent-red)";
+        document.getElementById('btnStart').innerText = "RESURRECT";
+    }
+
+    function update() {
+        frameCount++;
+
+        if (state === 'PLAY' && enemiesToSpawn > 0) {
+            if (spawnTimer <= 0) {
+                enemies.push(new Enemy());
+                enemiesToSpawn--;
+                spawnTimer = 60 - (wave * 2); 
+                if (spawnTimer < 15) spawnTimer = 15;
+            } else {
+                spawnTimer--;
+            }
+        }
+
+        if (state === 'PLAY' && enemiesToSpawn <= 0 && enemies.length === 0) {
+            state = 'WAITING';
+            wave++;
+            updateUI();
+        }
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            enemies[i].update();
+            if (enemies[i].hp <= 0) enemies.splice(i, 1);
+        }
+
+        towers.forEach(t => {
+            if (t.cooldown > 0) t.cooldown--;
+            
+            if (t.cooldown <= 0) {
+                let target = null;
+                for (let e of enemies) {
+                    let dist = Math.sqrt((e.x - t.x)**2 + (e.y - t.y)**2);
+                    if (dist <= t.range) {
+                        target = e;
+                        break; 
+                    }
+                }
+
+                if (target) {
+                    projectiles.push(new Projectile(t.x, t.y, target, t.damage, t.color));
+                    t.cooldown = t.maxCooldown;
+                }
+            }
+        });
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            projectiles[i].update();
+            if (!projectiles[i].active) projectiles.splice(i, 1);
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Spooky Path
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for(let i=1; i<path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 40;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(155, 89, 182, 0.4)'; // Ecto glow center
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Draw Placed Towers
+        towers.forEach(t => {
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(t.icon, t.x, t.y);
+            
+            ctx.beginPath();
+            ctx.ellipse(t.x, t.y + 15, 20, 8, 0, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fill();
+        });
+
+        // Draw Selected Tower Hologram
+        if (selectedTower) {
+            let spec = towerSpecs[selectedTower];
+            
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, spec.range, 0, Math.PI*2);
+            ctx.fillStyle = ectoplasm >= spec.cost ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)';
+            ctx.fill();
+            ctx.strokeStyle = ectoplasm >= spec.cost ? '#2ecc71' : '#e74c3c';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = 0.5;
+            ctx.fillText(spec.icon, mouseX, mouseY);
+            ctx.globalAlpha = 1.0;
+        }
+
+        enemies.forEach(e => e.draw());
+        projectiles.forEach(p => p.draw());
+    }
+
+    function gameLoop() {
+        if (state !== 'GAMEOVER') {
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    draw();
+
+</script>
+</body>
+</html>

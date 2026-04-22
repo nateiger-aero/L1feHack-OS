@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // CYBER_PINBALL</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: #fff; 
+            margin: 0; padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 229, 255, 0.05) 3px, rgba(0, 229, 255, 0.05) 4px);
+        }
+
+        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-cyan); background: rgba(0,0,0,0.8); flex-shrink: 0;}
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); text-transform: uppercase; }
+        .btn-return { background: none; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); padding: 5px 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 5px; transition: 0.3s; text-transform: uppercase;}
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        .game-container { flex: 1; display: flex; justify-content: center; align-items: stretch; gap: 40px; min-height: 0; padding-top: 20px; padding-bottom: 20px;}
+
+        /* Scoreboard */
+        .scoreboard { 
+            width: 250px; background: rgba(0, 15, 20, 0.9); border: 2px solid var(--neon-cyan); 
+            border-radius: 10px; padding: 20px; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); 
+            display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; align-self: center;
+        }
+        .score-box { background: #000; border: 1px solid var(--neon-pink); padding: 15px; text-align: center; }
+        .score-title { font-size: 0.8rem; color: var(--neon-pink); letter-spacing: 2px; margin-bottom: 5px; }
+        .score-val { font-size: 2.5rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px var(--neon-pink); }
+        
+        .controls-info { font-size: 0.8rem; color: #888; line-height: 1.6; padding: 15px; border: 1px dashed #444; }
+        .controls-info span { color: var(--neon-cyan); font-weight: bold; }
+
+        /* The Pinball Machine */
+        .machine-housing {
+            position: relative; padding: 15px; background: #111; border-radius: 20px;
+            box-shadow: inset 0 0 50px #000, 0 0 30px rgba(0, 229, 255, 0.1);
+            border: 4px solid #222; display: flex; justify-content: center; align-items: center;
+            height: 100%; box-sizing: border-box;
+        }
+
+        canvas { 
+            background: #02050a; border-radius: 10px; border: 2px solid var(--neon-cyan); 
+            box-shadow: inset 0 0 40px rgba(0, 229, 255, 0.1); display: block;
+            max-height: 100%; max-width: 100%; object-fit: contain; aspect-ratio: 45 / 70;
+        }
+
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); border-radius: 20px; z-index: 10; }
+        .overlay-title { font-size: 2.5rem; color: var(--neon-green); text-shadow: 0 0 20px var(--neon-green); margin-bottom: 20px; letter-spacing: 5px; }
+        .btn-start { background: transparent; border: 2px solid var(--neon-green); color: var(--neon-green); padding: 10px 30px; font-size: 1.2rem; cursor: pointer; transition: 0.3s; font-family: inherit; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+        .btn-start:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 20px var(--neon-green); }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BREAK // CYBER_PINBALL</h1>
+    <button class="btn-return" onclick="window.location.href='break.html'">◄ PLAZA</button>
+</header>
+
+<div class="game-container">
+    
+    <div class="scoreboard">
+        <div class="score-box">
+            <div class="score-title">DATA_MINED</div>
+            <div class="score-val" id="scoreDisplay">0</div>
+        </div>
+        <div class="score-box" style="border-color: var(--neon-cyan);">
+            <div class="score-title" style="color: var(--neon-cyan);">PACKETS_REMAINING</div>
+            <div class="score-val" id="livesDisplay">3</div>
+        </div>
+        
+        <div class="controls-info">
+            <div style="color:#fff; font-weight:bold; margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">SYSTEM_CONTROLS</div>
+            [ <span>SPACE</span> ] Plunger / Launch<br>
+            [ <span>LEFT ARROW</span> ] Left Flipper<br>
+            [ <span>RIGHT ARROW</span> ] Right Flipper
+        </div>
+    </div>
+
+    <div class="machine-housing">
+        <div id="overlay">
+            <div class="overlay-title">SYSTEM_READY</div>
+            <button class="btn-start" onclick="initGame()">INSERT_COIN</button>
+        </div>
+        <canvas id="pbCanvas" width="450" height="700"></canvas>
+    </div>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('pbCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const GRAVITY = 0.3;
+    const FRICTION = 0.99;
+    const MAX_SPEED = 22;
+    
+    let score = 0;
+    let lives = 3;
+    let gameState = 'START'; 
+    let animationId;
+
+    let keys = { ArrowLeft: false, ArrowRight: false, Space: false };
+
+    const ball = { x: 425, y: 600, vx: 0, vy: 0, radius: 8, color: '#39ff14' };
+    
+    const bumpers = [
+        { x: 150, y: 200, r: 25, color: '#ff007f', points: 100, flash: 0 },
+        { x: 270, y: 150, r: 25, color: '#ff007f', points: 100, flash: 0 },
+        { x: 270, y: 250, r: 25, color: '#ff007f', points: 100, flash: 0 },
+        { x: 210, y: 100, r: 15, color: '#f1c40f', points: 500, flash: 0 }
+    ];
+
+    // Moved slightly outwards to clear the lane
+    const slingshots = [
+        { x: 90, y: 500, r: 15, color: '#00e5ff', flash: 0 },
+        { x: 310, y: 500, r: 15, color: '#00e5ff', flash: 0 }
+    ];
+
+    // Shortened to 60px, moved hinges outward to x:130 and x:270
+    const fLeft = { x: 130, y: 600, active: false, angle: 30, length: 60 };
+    const fRight = { x: 270, y: 600, active: false, angle: -30, length: 60 };
+
+    window.addEventListener('keydown', (e) => {
+        if(e.code === 'ArrowLeft') keys.ArrowLeft = true;
+        if(e.code === 'ArrowRight') keys.ArrowRight = true;
+        if(e.code === 'Space') keys.Space = true;
+    });
+    window.addEventListener('keyup', (e) => {
+        if(e.code === 'ArrowLeft') keys.ArrowLeft = false;
+        if(e.code === 'ArrowRight') keys.ArrowRight = false;
+        if(e.code === 'Space') keys.Space = false;
+    });
+
+    function initGame() {
+        document.getElementById('overlay').style.display = 'none';
+        score = 0;
+        lives = 3;
+        updateUI();
+        resetBall();
+        // Removed the line that instantly set gameState = 'PLAY'
+        if(animationId) cancelAnimationFrame(animationId);
+        gameLoop();
+    }
+
+    function resetBall() {
+        ball.x = 425; 
+        ball.y = 600;
+        ball.vx = 0;
+        ball.vy = 0;
+        gameState = 'WAITING_LAUNCH';
+    }
+
+    function addScore(pts) {
+        score += pts;
+        document.getElementById('scoreDisplay').innerText = score;
+    }
+
+    function updateUI() {
+        document.getElementById('scoreDisplay').innerText = score;
+        document.getElementById('livesDisplay').innerText = lives;
+    }
+
+    function updatePhysics() {
+        if (gameState === 'WAITING_LAUNCH') {
+            if (keys.Space) {
+                ball.vy = -28; 
+                gameState = 'PLAY';
+            }
+            return;
+        }
+
+        ball.vy += GRAVITY;
+        ball.vx *= FRICTION;
+        ball.vy *= FRICTION;
+
+        if(ball.vx > MAX_SPEED) ball.vx = MAX_SPEED;
+        if(ball.vx < -MAX_SPEED) ball.vx = -MAX_SPEED;
+        if(ball.vy > MAX_SPEED) ball.vy = MAX_SPEED;
+        if(ball.vy < -MAX_SPEED) ball.vy = -MAX_SPEED;
+
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.x > 400 && ball.y < 120) {
+            ball.vx = -8; 
+            ball.vy += 1; 
+        }
+
+        if (ball.x - ball.radius < 0) { ball.x = ball.radius; ball.vx *= -0.6; } 
+        if (ball.x + ball.radius > 400 && ball.y < 650) { 
+            if(ball.x > 400 && ball.vx > 0) { ball.x = 400 - ball.radius; ball.vx *= -0.6; }
+        }
+        if (ball.x + ball.radius > 450) { ball.x = 450 - ball.radius; ball.vx *= -0.6; }
+        if (ball.y - ball.radius < 0) { ball.y = ball.radius; ball.vy *= -0.6; }
+        
+        // Funnel Walls
+        if (ball.y > 450 && ball.x < 130) { ball.vx += 1; ball.vy += 0.5; } 
+        if (ball.y > 450 && ball.x > 270 && ball.x < 400) { ball.vx -= 1; ball.vy += 0.5; } 
+
+        bumpers.forEach(b => {
+            if(b.flash > 0) b.flash--;
+            const dx = ball.x - b.x;
+            const dy = ball.y - b.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < ball.radius + b.r) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                ball.vx = nx * 10; 
+                ball.vy = ny * 10;
+                addScore(b.points);
+                b.flash = 10; 
+            }
+        });
+
+        slingshots.forEach((s, idx) => {
+            if(s.flash > 0) s.flash--;
+            const dx = ball.x - s.x;
+            const dy = ball.y - s.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < ball.radius + s.r) {
+                ball.vy = -12; 
+                ball.vx = idx === 0 ? 8 : -8; 
+                addScore(50);
+                s.flash = 10;
+            }
+        });
+
+        fLeft.active = keys.ArrowLeft;
+        fRight.active = keys.ArrowRight;
+
+        // CALIBRATED FLIPPER ZONES AND SLOPE PHYSICS
+        // Left Flipper
+        if (ball.x >= 120 && ball.x <= 190 && ball.y >= 580 && ball.y <= 640) {
+            if (fLeft.active && ball.vy > 0) {
+                ball.vy = -16 - Math.random() * 4; // Add slight randomness to prevent infinite loops
+                ball.vx = (ball.x - 130) * 0.2 + 3; 
+            } else if (!fLeft.active) {
+                // Calculate geometric resting slope
+                let expectedY = 600 + (ball.x - 130) * 0.5;
+                if (ball.y > expectedY - ball.radius) {
+                    ball.y = expectedY - ball.radius;
+                    ball.vy *= -0.2; // Dampen bounce
+                    ball.vx += 0.5; // Slide down to the right
+                }
+            }
+        }
+        
+        // Right Flipper
+        if (ball.x >= 210 && ball.x <= 280 && ball.y >= 580 && ball.y <= 640) {
+            if (fRight.active && ball.vy > 0) {
+                ball.vy = -16 - Math.random() * 4;
+                ball.vx = (ball.x - 270) * 0.2 - 3;
+            } else if (!fRight.active) {
+                // Calculate geometric resting slope
+                let expectedY = 600 - (ball.x - 270) * 0.5;
+                if (ball.y > expectedY - ball.radius) {
+                    ball.y = expectedY - ball.radius;
+                    ball.vy *= -0.2;
+                    ball.vx -= 0.5; // Slide down to the left
+                }
+            }
+        }
+
+        if (ball.y > 700) {
+            lives--;
+            updateUI();
+            if (lives <= 0) {
+                gameState = 'GAMEOVER';
+                const ov = document.getElementById('overlay');
+                ov.style.display = 'flex';
+                ov.querySelector('.overlay-title').innerText = "CONNECTION_LOST";
+                ov.querySelector('.overlay-title').style.color = "var(--neon-pink)";
+                ov.querySelector('.btn-start').innerText = "REBOOT_SYSTEM";
+            } else {
+                resetBall();
+            }
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = '#02050a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(400, 120);
+        ctx.lineTo(400, 700);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, 500); ctx.lineTo(130, 600);
+        ctx.moveTo(400, 500); ctx.lineTo(270, 600);
+        ctx.stroke();
+
+        bumpers.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            ctx.fillStyle = b.flash > 0 ? '#fff' : b.color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = b.flash > 0 ? 4 : 1;
+            ctx.stroke();
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = '#000'; ctx.fill();
+        });
+
+        slingshots.forEach(s => {
+            ctx.beginPath();
+            ctx.moveTo(s.x, s.y - 30);
+            ctx.lineTo(s.x - 15, s.y + 20);
+            ctx.lineTo(s.x + 15, s.y + 20);
+            ctx.closePath();
+            ctx.fillStyle = s.flash > 0 ? '#fff' : s.color;
+            ctx.fill();
+        });
+
+        ctx.lineWidth = 15;
+        ctx.lineCap = "round";
+        
+        // Left Flipper
+        ctx.save();
+        ctx.translate(fLeft.x, fLeft.y);
+        ctx.rotate((fLeft.active ? -30 : 30) * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(fLeft.length, 0);
+        ctx.strokeStyle = fLeft.active ? '#fff' : '#00e5ff'; ctx.stroke();
+        ctx.restore();
+
+        // Right Flipper
+        ctx.save();
+        ctx.translate(fRight.x, fRight.y);
+        ctx.rotate((fRight.active ? 30 : -30) * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-fRight.length, 0);
+        ctx.strokeStyle = fRight.active ? '#fff' : '#00e5ff'; ctx.stroke();
+        ctx.restore();
+
+        // Data Packet (Ball)
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ball.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = ball.color;
+        ctx.fill();
+        ctx.shadowBlur = 0; 
+    }
+
+    function gameLoop() {
+        if (gameState !== 'GAMEOVER') {
+            updatePhysics();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    draw();
+
+</script>
+</body>
+</html>

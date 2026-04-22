@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // PROJECTION_MATRIX</title>
+    <style>
+        :root {
+            /* Body Branch Palette */
+            --bg-dark: #010a0f;
+            --neon-primary: #00e5ff; 
+            --neon-glow: #80f2ff;
+            --text-primary: #e0faff; 
+            --text-dim: #4da6b3;
+            --neon-warn: #f39c12;
+            --neon-green: #39ff14;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-primary); background: rgba(0,0,0,0.8); flex-shrink: 0;}
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--neon-primary); text-shadow: 0 0 10px var(--neon-primary); text-transform: uppercase; }
+        .btn-return { background: none; border: 2px solid var(--neon-primary); color: var(--neon-primary); padding: 5px 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 5px; transition: 0.3s; text-transform: uppercase;}
+        .btn-return:hover { background: var(--neon-primary); color: black; box-shadow: 0 0 15px var(--neon-primary); }
+
+        .layout-grid { flex: 1; display: grid; grid-template-columns: 320px 1fr; gap: 20px; min-height: 0; padding-top: 20px; }
+
+        /* Panels */
+        .panel { 
+            background: rgba(0, 10, 15, 0.9); border: 1px solid var(--text-dim); 
+            border-radius: 10px; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .panel-header { 
+            background: rgba(0, 229, 255, 0.1); border-bottom: 1px solid var(--neon-primary); 
+            padding: 10px; font-weight: bold; text-align: center; letter-spacing: 2px; color: var(--neon-glow); font-size: 0.9rem;
+        }
+
+        /* Input Form */
+        .form-content { padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        label { font-size: 0.7rem; color: var(--text-dim); font-weight: bold; margin-bottom: 2px; }
+        input, select { background: #000; border: 1px solid var(--text-dim); color: #fff; padding: 10px; font-family: inherit; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 5px; }
+        input:focus { border-color: var(--neon-primary); }
+
+        .btn-init { background: var(--neon-primary); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .btn-init:hover { box-shadow: 0 0 20px var(--neon-primary); }
+
+        /* Goals Grid */
+        .goals-container { flex: 1; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; align-content: flex-start; }
+        
+        .goal-card { background: rgba(0,0,0,0.6); border: 1px solid var(--text-dim); padding: 20px; border-radius: 8px; position: relative; display: flex; flex-direction: column; gap: 15px; }
+        .goal-title { font-size: 1.1rem; color: var(--neon-glow); font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        
+        /* Progress Visualization */
+        .progress-wrap { width: 100%; height: 30px; background: #000; border: 1px solid var(--text-dim); border-radius: 5px; position: relative; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--neon-primary), var(--neon-green)); transition: width 1s ease-in-out; }
+        .progress-text { position: absolute; width: 100%; text-align: center; line-height: 30px; font-size: 0.8rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; z-index: 5; }
+
+        /* Stats Row */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-item { background: rgba(0, 229, 255, 0.05); padding: 10px; border: 1px dotted var(--text-dim); text-align: center; }
+        .stat-lbl { font-size: 0.6rem; color: var(--text-dim); margin-bottom: 3px; text-transform: uppercase; }
+        .stat-val { font-size: 1rem; font-weight: bold; }
+
+        .temporal-stat { grid-column: 1 / -1; border-color: var(--neon-warn); color: var(--neon-warn); }
+
+        /* Card Actions */
+        .card-actions { display: flex; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
+        .btn-action { flex: 1; padding: 8px; background: #000; border: 1px solid var(--text-dim); color: var(--text-dim); font-family: inherit; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: bold;}
+        .btn-action:hover { border-color: var(--neon-primary); color: var(--neon-primary); }
+        .btn-delete { color: var(--neon-red); border-color: var(--neon-red); flex: 0.2; }
+        .btn-delete:hover { background: var(--neon-red); color: #fff; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BODY // PROJECTION_MATRIX</h1>
+    <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE</button>
+</header>
+
+<div class="layout-grid">
+    
+    <div class="panel">
+        <div class="panel-header">INITIALIZE_NEW_GOAL</div>
+        <div class="form-content">
+            <label>OBJECTIVE_DESIGNATION</label>
+            <input type="text" id="goalName" placeholder="e.g., VEHICLE_ACQUISITION">
+
+            <label>TARGET_CAPITAL ($)</label>
+            <input type="number" id="goalTarget" placeholder="10000.00">
+
+            <label>CURRENT_RESERVES ($)</label>
+            <input type="number" id="goalCurrent" value="0" placeholder="0.00">
+
+            <label style="border-top: 1px solid #333; margin-top: 10px; padding-top: 10px;">CONTRIBUTION_RATE ($)</label>
+            <input type="number" id="goalRate" placeholder="100.00">
+
+            <label>FREQUENCY</label>
+            <select id="goalFreq">
+                <option value="daily">PER_DAY</option>
+                <option value="weekly" selected>PER_WEEK</option>
+                <option value="monthly">PER_MONTH</option>
+            </select>
+
+            <button class="btn-init" onclick="createGoal()">COMMIT_OBJECTIVE</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">ACTIVE_TEMPORAL_OBJECTIVES</div>
+        <div class="goals-container" id="goalsGrid">
+            </div>
+    </div>
+
+</div>
+
+<script>
+    const DB_KEY = 'wos_finance_goals';
+    let goals = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+
+    function init() {
+        // Seed if empty
+        if (goals.length === 0) {
+            goals = [
+                { id: 1, name: "VEHICLE_FUND", target: 12000, current: 4500, rate: 200, freq: 'weekly' }
+            ];
+            save();
+        }
+        renderGoals();
+    }
+
+    function createGoal() {
+        const name = document.getElementById('goalName').value.trim().toUpperCase();
+        const target = parseFloat(document.getElementById('goalTarget').value);
+        const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
+        const rate = parseFloat(document.getElementById('goalRate').value);
+        const freq = document.getElementById('goalFreq').value;
+
+        if (!name || isNaN(target) || isNaN(rate)) return alert("SYS_ERROR: PARAMETERS_INCOMPLETE");
+
+        const newGoal = {
+            id: Date.now(),
+            name, target, current, rate, freq
+        };
+
+        goals.push(newGoal);
+        save();
+        
+        // Reset form
+        document.getElementById('goalName').value = "";
+        document.getElementById('goalTarget').value = "";
+        document.getElementById('goalCurrent').value = "0";
+        document.getElementById('goalRate').value = "";
+        
+        renderGoals();
+    }
+
+    function renderGoals() {
+        const grid = document.getElementById('goalsGrid');
+        grid.innerHTML = "";
+
+        goals.forEach(goal => {
+            const pct = Math.min(100, (goal.current / goal.target) * 100).toFixed(1);
+            const remaining = Math.max(0, goal.target - goal.current);
+            const eta = calculateETA(remaining, goal.rate, goal.freq);
+
+            const card = document.createElement('div');
+            card.className = 'goal-card';
+            card.innerHTML = `
+                <div class="goal-title">
+                    <span>${goal.name}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-dim);">$${goal.target.toLocaleString()}</span>
+                </div>
+
+                <div class="progress-wrap">
+                    <div class="progress-text">${pct}% COMPLETED</div>
+                    <div class="progress-bar" style="width: ${pct}%"></div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-lbl">RESERVES</div>
+                        <div class="stat-val">$${goal.current.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-lbl">REMAINING</div>
+                        <div class="stat-val">$${remaining.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-item temporal-stat">
+                        <div class="stat-lbl">ESTIMATED_ARRIVAL_TIME</div>
+                        <div class="stat-val">${eta}</div>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn-action" onclick="injectCash(${goal.id})">INJECT_CAPITAL</button>
+                    <button class="btn-action" onclick="adjustRate(${goal.id})">ADJUST_RATE</button>
+                    <button class="btn-action btn-delete" onclick="deleteGoal(${goal.id})">TERMINATE</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function calculateETA(rem, rate, freq) {
+        if (rem <= 0) return "OBJECTIVE_SECURED";
+        if (rate <= 0) return "STALLED: RATE_ZERO";
+
+        const counts = rem / rate;
+        let days = 0;
+
+        if (freq === 'daily') days = counts;
+        if (freq === 'weekly') days = counts * 7;
+        if (freq === 'monthly') days = counts * 30.44;
+
+        if (days < 30) return `~${Math.ceil(days)} DAYS`;
+        if (days < 365) return `~${(days / 30.44).toFixed(1)} MONTHS`;
+        return `~${(days / 365).toFixed(1)} YEARS`;
+    }
+
+    function injectCash(id) {
+        const amt = prompt("ENTER_CAPITAL_INJECTION_AMOUNT ($):");
+        if (amt === null || isNaN(amt)) return;
+        
+        const goal = goals.find(g => g.id === id);
+        if (goal) {
+            goal.current += parseFloat(amt);
+            save();
+            renderGoals();
+        }
+    }
+
+    function adjustRate(id) {
+        const rate = prompt("ENTER_NEW_CONTRIBUTION_RATE ($):");
+        if (rate === null || isNaN(rate)) return;
+        
+        const goal = goals.find(g => g.id === id);
+        if (goal) {
+            goal.rate = parseFloat(rate);
+            save();
+            renderGoals();
+        }
+    }
+
+    function deleteGoal(id) {
+        if (!confirm("TERMINATE_OBJECTIVE? DATA_LOSS_PERMANENT.")) return;
+        goals = goals.filter(g => g.id !== id);
+        save();
+        renderGoals();
+    }
+
+    function save() {
+        localStorage.setItem(DB_KEY, JSON.stringify(goals));
+    }
+
+    init();
+</script>
+</body>
+</html>

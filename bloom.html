@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // BLOOM_3D</title>
+    <style>
+        :root {
+            /* Break Room Light Palette */
+            --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            --text-dark: #2c3e50;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --doom-bg: #111;
+        }
+
+        body { 
+            font-family: var(--font-main); background: var(--bg-gradient); color: var(--text-dark); 
+            margin: 0; padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent-red); background: rgba(255,255,255,0.9); flex-shrink: 0; border-radius: 10px 10px 0 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--accent-red); text-transform: uppercase; }
+        .btn-return { background: none; border: 2px solid var(--accent-red); color: var(--accent-red); padding: 5px 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 20px; transition: 0.3s; text-transform: uppercase;}
+        .btn-return:hover { background: var(--accent-red); color: white; box-shadow: 0 0 10px rgba(231, 76, 60, 0.4); }
+
+        .game-container { flex: 1; display: flex; justify-content: center; align-items: stretch; gap: 40px; min-height: 0; padding-top: 20px; padding-bottom: 20px;}
+
+        /* Status Panel (HUD) */
+        .status-panel { 
+            width: 250px; background: rgba(255, 255, 255, 0.9); border: 2px solid #e0e0e0; 
+            border-radius: 15px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+            display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; align-self: center;
+        }
+        
+        .stat-box { background: #f8f9fa; border: 2px solid #ccc; border-radius: 10px; padding: 15px; text-align: center; }
+        .stat-title { font-size: 0.8rem; color: var(--text-dark); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
+        .stat-val { font-size: 2rem; font-weight: bold; }
+        
+        .controls-info { font-size: 0.8rem; color: #7f8c8d; line-height: 1.6; padding: 15px; border: 1px dashed #bdc3c7; border-radius: 10px; background: #fff;}
+        .controls-info span { color: var(--accent-red); font-weight: bold; }
+
+        /* The Machine */
+        .machine-housing {
+            position: relative; padding: 15px; background: #fff; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid #ddd;
+            display: flex; justify-content: center; align-items: center; height: 100%; box-sizing: border-box; flex: 1;
+        }
+
+        canvas { 
+            background: var(--doom-bg); border-radius: 5px; border: 4px solid #333; 
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8); display: block;
+            width: 100%; height: 100%; object-fit: cover; 
+            image-rendering: pixelated; 
+        }
+
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); border-radius: 20px; z-index: 10; }
+        .overlay-title { font-size: 3rem; color: var(--accent-red); font-weight: bold; margin-bottom: 20px; letter-spacing: 5px; text-shadow: 0 4px 15px rgba(231, 76, 60, 0.5); text-align: center;}
+        .btn-start { background: var(--accent-red); border: none; color: #fff; padding: 15px 40px; font-size: 1.2rem; cursor: pointer; transition: 0.3s; font-family: inherit; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border-radius: 30px; box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);}
+        .btn-start:hover { transform: translateY(-3px); background: #c0392b; box-shadow: 0 8px 20px rgba(231, 76, 60, 0.5); }
+        
+        /* Damage Flash */
+        #damageFlash { position: absolute; top:0; left:0; width: 100%; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.1s; border-radius: 20px; z-index: 5;}
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BREAK // BLOOM_3D</h1>
+    <button class="btn-return" onclick="window.location.href='break.html'">◄ PLAZA</button>
+</header>
+
+<div class="game-container">
+    
+    <div class="status-panel">
+        <div class="stat-box" style="border-color: var(--accent-red);">
+            <div class="stat-title" style="color: var(--accent-red);">HEALTH</div>
+            <div class="stat-val" id="hpDisplay" style="color: var(--accent-red);">100%</div>
+        </div>
+        <div class="stat-box" style="border-color: var(--accent-blue);">
+            <div class="stat-title" style="color: var(--accent-blue);">PESTICIDE</div>
+            <div class="stat-val" id="ammoDisplay" style="color: var(--accent-blue);">50</div>
+        </div>
+        <div class="stat-box" style="border-color: var(--accent-green);">
+            <div class="stat-title" style="color: var(--accent-green);">WEEDS_PULLED</div>
+            <div class="stat-val" id="scoreDisplay" style="color: var(--accent-green);">0</div>
+        </div>
+        
+        <div class="controls-info">
+            <div style="color:var(--text-dark); font-weight:bold; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">COMBAT_CONTROLS</div>
+            [ <span>W / S</span> ] Move Fwd/Back<br>
+            [ <span>A / D</span> ] Rotate Camera<br>
+            [ <span>SPACE</span> ] Fire Pesticide<br><br>
+            Survive the botanical outbreak.
+        </div>
+    </div>
+
+    <div class="machine-housing">
+        <div id="damageFlash"></div>
+        <div id="overlay">
+            <div class="overlay-title" id="ovTitle">GARDEN_OVERRUN</div>
+            <button class="btn-start" id="btnStart" onclick="initGame()">COMMENCE_WEEDING</button>
+        </div>
+        <canvas id="doomCanvas" width="320" height="240"></canvas>
+    </div>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('doomCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // --- GAME ENGINE CONSTANTS ---
+    const SCREEN_W = canvas.width;
+    const SCREEN_H = canvas.height;
+    
+    let gameState = 'START'; 
+    let animationId;
+    let lastTime = 0;
+
+    // --- PLAYER STATE ---
+    let player = {
+        x: 3.5, y: 3.5, 
+        dirX: -1, dirY: 0, 
+        planeX: 0, planeY: 0.66, 
+        hp: 100, ammo: 50, score: 0,
+        isShooting: false, weaponFrame: 0
+    };
+
+    // --- MAP (1 = Hedge, 0 = Empty, 2 = Stone Wall) ---
+    const mapSize = 12;
+    const worldMap = [
+        [2,2,2,2,2,2,2,2,2,2,2,2],
+        [2,0,0,0,0,0,0,1,0,0,0,2],
+        [2,0,1,1,1,0,0,1,0,1,0,2],
+        [2,0,1,0,0,0,0,0,0,1,0,2],
+        [2,0,1,0,1,1,0,1,1,1,0,2],
+        [2,0,0,0,0,1,0,0,0,0,0,2],
+        [2,1,1,1,0,1,1,1,0,1,0,2],
+        [2,0,0,1,0,0,0,1,0,1,0,2],
+        [2,0,0,0,0,1,0,0,0,1,0,2],
+        [2,0,1,1,1,1,1,1,0,1,0,2],
+        [2,0,0,0,0,0,0,0,0,0,0,2],
+        [2,2,2,2,2,2,2,2,2,2,2,2]
+    ];
+
+    // --- ENEMIES (Sprites) ---
+    let sprites = [];
+    const enemyTypes = ['🌻', '🌵', '🍄', '🥀'];
+    
+    function spawnEnemies() {
+        sprites = [];
+        for(let i=0; i<15; i++) {
+            let rx = Math.floor(Math.random() * (mapSize-2)) + 1;
+            let ry = Math.floor(Math.random() * (mapSize-2)) + 1;
+            if (worldMap[rx][ry] === 0 && (rx !== 3 || ry !== 3)) {
+                sprites.push({
+                    x: rx + 0.5, y: ry + 0.5,
+                    icon: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
+                    hp: 20, alive: true,
+                    cooldown: 0
+                });
+            }
+        }
+    }
+
+    // --- INPUT HANDLING ---
+    let keys = { w: false, a: false, s: false, d: false, space: false };
+    
+    window.addEventListener('keydown', (e) => {
+        if(e.key === 'w' || e.key === 'W') keys.w = true;
+        if(e.key === 's' || e.key === 'S') keys.s = true;
+        if(e.key === 'a' || e.key === 'A') keys.a = true;
+        if(e.key === 'd' || e.key === 'D') keys.d = true;
+        if(e.code === 'Space') { 
+            e.preventDefault(); 
+            if(!keys.space && gameState === 'PLAY') shoot(); 
+            keys.space = true; 
+        }
+    });
+    
+    window.addEventListener('keyup', (e) => {
+        if(e.key === 'w' || e.key === 'W') keys.w = false;
+        if(e.key === 's' || e.key === 'S') keys.s = false;
+        if(e.key === 'a' || e.key === 'A') keys.a = false;
+        if(e.key === 'd' || e.key === 'D') keys.d = false;
+        if(e.code === 'Space') keys.space = false;
+    });
+
+    // --- GAME LOGIC ---
+    function initGame() {
+        document.getElementById('overlay').style.display = 'none';
+        player.hp = 100; player.ammo = 50; player.score = 0;
+        player.x = 3.5; player.y = 3.5;
+        player.dirX = -1; player.dirY = 0;
+        player.planeX = 0; player.planeY = 0.66;
+        spawnEnemies();
+        updateUI();
+        gameState = 'PLAY';
+        lastTime = performance.now();
+        if(animationId) cancelAnimationFrame(animationId);
+        gameLoop(lastTime);
+    }
+
+    function updateUI() {
+        document.getElementById('hpDisplay').innerText = Math.max(0, Math.floor(player.hp)) + '%';
+        document.getElementById('ammoDisplay').innerText = player.ammo;
+        document.getElementById('scoreDisplay').innerText = player.score;
+    }
+
+    function takeDamage(amt) {
+        player.hp -= amt;
+        updateUI();
+        
+        const flash = document.getElementById('damageFlash');
+        flash.style.opacity = '0.5';
+        setTimeout(() => flash.style.opacity = '0', 100);
+
+        if (player.hp <= 0) {
+            gameState = 'GAMEOVER';
+            const ov = document.getElementById('overlay');
+            ov.style.display = 'flex';
+            document.getElementById('ovTitle').innerText = "MULCHED";
+            document.getElementById('btnStart').innerText = "REPLANT";
+        }
+    }
+
+    function shoot() {
+        if (player.ammo <= 0) return;
+        player.ammo--;
+        player.isShooting = true;
+        player.weaponFrame = 5; 
+        updateUI();
+
+        let hitDist = Infinity;
+        let hitTarget = null;
+
+        sprites.forEach(sprite => {
+            if (!sprite.alive) return;
+            let spriteX = sprite.x - player.x;
+            let spriteY = sprite.y - player.y;
+            
+            let playerAngle = Math.atan2(player.dirY, player.dirX);
+            let spriteAngle = Math.atan2(spriteY, spriteX);
+            let angleDiff = spriteAngle - playerAngle;
+            
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+            if (Math.abs(angleDiff) < 0.15) {
+                let dist = Math.sqrt(spriteX*spriteX + spriteY*spriteY);
+                if (dist < hitDist && dist < 8) { 
+                    hitDist = dist;
+                    hitTarget = sprite;
+                }
+            }
+        });
+
+        if (hitTarget) {
+            hitTarget.hp -= 20; 
+            if (hitTarget.hp <= 0) {
+                hitTarget.alive = false;
+                player.score++;
+                if(Math.random() > 0.5) player.ammo += 5;
+                updateUI();
+            }
+        }
+    }
+
+    function updateLogic(dt) {
+        const moveSpeed = dt * 3.0; 
+        const rotSpeed = dt * 2.5; 
+
+        if (keys.w) {
+            if (worldMap[Math.floor(player.x + player.dirX * moveSpeed)][Math.floor(player.y)] === 0) player.x += player.dirX * moveSpeed;
+            if (worldMap[Math.floor(player.x)][Math.floor(player.y + player.dirY * moveSpeed)] === 0) player.y += player.dirY * moveSpeed;
+        }
+        if (keys.s) {
+            if (worldMap[Math.floor(player.x - player.dirX * moveSpeed)][Math.floor(player.y)] === 0) player.x -= player.dirX * moveSpeed;
+            if (worldMap[Math.floor(player.x)][Math.floor(player.y - player.dirY * moveSpeed)] === 0) player.y -= player.dirY * moveSpeed;
+        }
+        
+        // FIXED: Reversed rotSpeed logic for intuitive looking
+        if (keys.d) {
+            let oldDirX = player.dirX;
+            player.dirX = player.dirX * Math.cos(-rotSpeed) - player.dirY * Math.sin(-rotSpeed);
+            player.dirY = oldDirX * Math.sin(-rotSpeed) + player.dirY * Math.cos(-rotSpeed);
+            let oldPlaneX = player.planeX;
+            player.planeX = player.planeX * Math.cos(-rotSpeed) - player.planeY * Math.sin(-rotSpeed);
+            player.planeY = oldPlaneX * Math.sin(-rotSpeed) + player.planeY * Math.cos(-rotSpeed);
+        }
+        if (keys.a) {
+            let oldDirX = player.dirX;
+            player.dirX = player.dirX * Math.cos(rotSpeed) - player.dirY * Math.sin(rotSpeed);
+            player.dirY = oldDirX * Math.sin(rotSpeed) + player.dirY * Math.cos(rotSpeed);
+            let oldPlaneX = player.planeX;
+            player.planeX = player.planeX * Math.cos(rotSpeed) - player.planeY * Math.sin(rotSpeed);
+            player.planeY = oldPlaneX * Math.sin(rotSpeed) + player.planeY * Math.cos(rotSpeed);
+        }
+
+        if(player.weaponFrame > 0) player.weaponFrame--;
+        else player.isShooting = false;
+
+        sprites.forEach(sprite => {
+            if(!sprite.alive) return;
+            
+            let dx = player.x - sprite.x;
+            let dy = player.y - sprite.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if(sprite.cooldown > 0) sprite.cooldown--;
+
+            if (dist < 6 && dist > 1.2) {
+                let ex = sprite.x + (dx/dist) * (moveSpeed * 0.3);
+                let ey = sprite.y + (dy/dist) * (moveSpeed * 0.3);
+                if(worldMap[Math.floor(ex)][Math.floor(ey)] === 0) {
+                    sprite.x = ex; sprite.y = ey;
+                }
+            } else if (dist <= 1.2) {
+                if(sprite.cooldown <= 0) {
+                    takeDamage(5);
+                    sprite.cooldown = 60; 
+                }
+            }
+        });
+    }
+
+    // --- RAYCASTING RENDER ENGINE ---
+    let zBuffer = new Array(SCREEN_W);
+
+    function draw() {
+        ctx.fillStyle = '#87CEEB'; // Sky
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H / 2);
+        ctx.fillStyle = '#4A3B2C'; // Dirt floor
+        ctx.fillRect(0, SCREEN_H / 2, SCREEN_W, SCREEN_H / 2);
+
+        for (let x = 0; x < SCREEN_W; x++) {
+            let cameraX = 2 * x / SCREEN_W - 1; 
+            let rayDirX = player.dirX + player.planeX * cameraX;
+            let rayDirY = player.dirY + player.planeY * cameraX;
+
+            let mapX = Math.floor(player.x);
+            let mapY = Math.floor(player.y);
+
+            let sideDistX, sideDistY;
+            let deltaDistX = (rayDirX === 0) ? 1e30 : Math.abs(1 / rayDirX);
+            let deltaDistY = (rayDirY === 0) ? 1e30 : Math.abs(1 / rayDirY);
+
+            let perpWallDist;
+            let stepX, stepY;
+            let hit = 0; 
+            let side = 0; 
+
+            if (rayDirX < 0) { stepX = -1; sideDistX = (player.x - mapX) * deltaDistX; } 
+            else { stepX = 1; sideDistX = (mapX + 1.0 - player.x) * deltaDistX; }
+            if (rayDirY < 0) { stepY = -1; sideDistY = (player.y - mapY) * deltaDistY; } 
+            else { stepY = 1; sideDistY = (mapY + 1.0 - player.y) * deltaDistY; }
+
+            while (hit === 0) {
+                if (sideDistX < sideDistY) {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                if (worldMap[mapX][mapY] > 0) hit = worldMap[mapX][mapY];
+            }
+
+            if (side === 0) perpWallDist = (mapX - player.x + (1 - stepX) / 2) / rayDirX;
+            else perpWallDist = (mapY - player.y + (1 - stepY) / 2) / rayDirY;
+
+            zBuffer[x] = perpWallDist;
+
+            let lineHeight = Math.floor(SCREEN_H / perpWallDist);
+            let drawStart = -lineHeight / 2 + SCREEN_H / 2;
+            if (drawStart < 0) drawStart = 0;
+            let drawEnd = lineHeight / 2 + SCREEN_H / 2;
+            if (drawEnd >= SCREEN_H) drawEnd = SCREEN_H - 1;
+
+            // FIXED: Much brighter greens for excellent visibility
+            if (hit === 1) ctx.fillStyle = side === 1 ? '#7bed9f' : '#2ed573'; // Vibrant Hedge
+            if (hit === 2) ctx.fillStyle = side === 1 ? '#bdc3c7' : '#95a5a6'; // Brighter Stone Wall
+
+            ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
+        }
+
+        let sortedSprites = sprites.map(s => {
+            return { ...s, distance: ((player.x - s.x) * (player.x - s.x) + (player.y - s.y) * (player.y - s.y)) };
+        }).sort((a, b) => b.distance - a.distance);
+
+        sortedSprites.forEach(sprite => {
+            if(!sprite.alive) return;
+
+            let spriteX = sprite.x - player.x;
+            let spriteY = sprite.y - player.y;
+
+            let invDet = 1.0 / (player.planeX * player.dirY - player.dirX * player.planeY);
+            let transformX = invDet * (player.dirY * spriteX - player.dirX * spriteY);
+            let transformY = invDet * (-player.planeY * spriteX + player.planeX * spriteY); 
+
+            if (transformY > 0) { 
+                let spriteScreenX = Math.floor((SCREEN_W / 2) * (1 + transformX / transformY));
+                let spriteHeight = Math.abs(Math.floor(SCREEN_H / (transformY))); 
+                let drawStartY = -spriteHeight / 2 + SCREEN_H / 2;
+
+                if (transformY < zBuffer[spriteScreenX]) {
+                    ctx.font = `${spriteHeight}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(sprite.icon, spriteScreenX, drawStartY);
+                }
+            }
+        });
+
+        // Crosshair
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillRect(SCREEN_W/2 - 2, SCREEN_H/2 - 2, 4, 4);
+
+        // Water Sprayer Weapon
+        ctx.font = '80px Arial';
+        ctx.textAlign = 'center';
+        
+        let weaponY = SCREEN_H - 10;
+        let weaponX = SCREEN_W/2 + 60;
+        
+        if (player.isShooting) {
+            weaponY += 15;
+            weaponX += 10;
+            ctx.font = '40px Arial';
+            ctx.fillText('💦', SCREEN_W/2, SCREEN_H/2);
+        }
+        
+        ctx.font = '100px Arial';
+        ctx.fillText('🔫', weaponX, weaponY);
+    }
+
+    function gameLoop(time) {
+        if (gameState !== 'GAMEOVER') {
+            let dt = (time - lastTime) / 1000;
+            lastTime = time;
+            if (dt > 0.1) dt = 0.1; 
+
+            updateLogic(dt);
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    draw();
+
+</script>
+</body>
+</html>

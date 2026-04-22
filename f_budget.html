@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // FISCAL_AUDIT</title>
+    <style>
+        :root {
+            /* Body Branch Palette */
+            --bg-dark: #010a0f;
+            --neon-primary: #00e5ff; 
+            --neon-glow: #80f2ff;
+            --text-primary: #e0faff; 
+            --text-dim: #4da6b3;
+            --neon-warn: #f39c12;
+            --neon-red: #ff2a2a;
+            --neon-green: #39ff14;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-primary); background: rgba(0,0,0,0.8); flex-shrink: 0;}
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--neon-primary); text-shadow: 0 0 10px var(--neon-primary); text-transform: uppercase; }
+        .btn-return { background: none; border: 2px solid var(--neon-primary); color: var(--neon-primary); padding: 5px 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 5px; transition: 0.3s; text-transform: uppercase;}
+        .btn-return:hover { background: var(--neon-primary); color: black; box-shadow: 0 0 15px var(--neon-primary); }
+
+        .layout-grid { flex: 1; display: grid; grid-template-columns: 300px 1fr 350px; gap: 20px; min-height: 0; padding-top: 20px; }
+
+        .panel { 
+            background: rgba(0, 10, 15, 0.9); border: 1px solid var(--text-dim); 
+            border-radius: 10px; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .panel-header { 
+            background: rgba(0, 229, 255, 0.1); border-bottom: 1px solid var(--neon-primary); 
+            padding: 10px; font-weight: bold; text-align: center; letter-spacing: 2px; color: var(--neon-glow); font-size: 0.9rem;
+        }
+        .panel-content { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+        label { font-size: 0.7rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 5px;}
+        input, select { background: #000; border: 1px solid var(--text-dim); color: #fff; padding: 10px; font-family: inherit; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; font-size: 0.8rem;}
+        input:focus, select:focus { border-color: var(--neon-primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
+        
+        .radio-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .radio-label { flex: 1; text-align: center; padding: 8px; border: 1px solid var(--text-dim); cursor: pointer; transition: 0.2s; font-size: 0.8rem; font-weight: bold;}
+        .radio-label input { display: none; }
+        .radio-label:has(input[value="exp"]:checked) { background: rgba(255, 42, 42, 0.2); border-color: var(--neon-red); color: var(--neon-red); }
+        .radio-label:has(input[value="inc"]:checked) { background: rgba(57, 255, 20, 0.2); border-color: var(--neon-green); color: var(--neon-green); }
+
+        .btn-submit { background: var(--neon-primary); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; letter-spacing: 2px;}
+        .btn-submit:hover { box-shadow: 0 0 15px var(--neon-primary); }
+
+        .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .stat-box { background: #000; border: 1px dashed var(--text-dim); padding: 10px; text-align: center; }
+        .stat-val { font-size: 1.4rem; font-weight: bold; margin-top: 5px; }
+        .val-pos { color: var(--neon-green); text-shadow: 0 0 5px rgba(57, 255, 20, 0.5); }
+        .val-neg { color: var(--neon-red); text-shadow: 0 0 5px rgba(255, 42, 42, 0.5); }
+        .val-net { color: var(--neon-primary); text-shadow: 0 0 5px rgba(0, 229, 255, 0.5); }
+
+        .ledger-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .ledger-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--text-dim); color: var(--text-dim); }
+        .ledger-table td { padding: 10px 8px; border-bottom: 1px dotted #333; }
+        .ledger-row:hover { background: rgba(0, 229, 255, 0.05); }
+        .tx-desc { font-weight: bold; color: var(--text-primary); }
+        .tx-cat { font-size: 0.65rem; color: var(--text-dim); background: rgba(0, 229, 255, 0.1); padding: 2px 6px; border-radius: 10px; border: 1px solid var(--text-dim);}
+        .tx-amt { text-align: right; font-weight: bold; font-size: 0.9rem; }
+        .btn-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.8rem; }
+        .btn-del:hover { color: var(--neon-red); }
+
+        .analytics-bar-wrap { width: 100%; height: 25px; background: #000; border: 1px solid var(--text-dim); display: flex; margin-top: 10px; position: relative;}
+        .bar-segment { height: 100%; transition: width 0.5s; display: flex; justify-content: center; align-items: center; overflow: hidden; font-size: 0.6rem; font-weight: bold; color: #000;}
+
+        .bill-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #000; border-left: 3px solid var(--neon-warn); margin-bottom: 10px; }
+        .bill-item.paid { border-left-color: var(--neon-green); opacity: 0.6; }
+        .bill-item.paid .bill-title { text-decoration: line-through; }
+        .bill-title { font-weight: bold; font-size: 0.85rem; }
+        .bill-meta { font-size: 0.65rem; color: var(--text-dim); margin-top: 3px; }
+        .bill-amt { font-weight: bold; color: var(--neon-warn); }
+        .bill-item.paid .bill-amt { color: var(--neon-green); }
+        .chk-paid { width: 18px; height: 18px; accent-color: var(--neon-green); cursor: pointer; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BODY // FISCAL_AUDIT</h1>
+    <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE</button>
+</header>
+
+<div class="layout-grid">
+    
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="panel">
+            <div class="panel-header">LOG_TRANSACTION</div>
+            <div class="panel-content" style="padding-bottom: 10px;">
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="txType" value="exp" checked> EXPENSE
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="txType" value="inc"> INCOME
+                    </label>
+                </div>
+
+                <label>AMOUNT ($)</label>
+                <input type="number" id="txAmt" step="0.01" placeholder="0.00">
+
+                <label>DESCRIPTION</label>
+                <input type="text" id="txDesc" placeholder="Note...">
+
+                <label>CATEGORY</label>
+                <select id="txCat">
+                    <option value="housing">Housing & Utilities</option>
+                    <option value="auto">Automotive / Transport</option>
+                    <option value="food">Groceries & Dining</option>
+                    <option value="education">Education</option>
+                    <option value="tech">Tech & Gear</option>
+                    <option value="ent">Entertainment</option>
+                    <option value="misc">Miscellaneous</option>
+                    <option value="income">Income / Deposit</option>
+                </select>
+
+                <label>DATE</label>
+                <input type="date" id="txDate">
+
+                <button class="btn-submit" onclick="addTransaction()">COMMIT_DATA</button>
+            </div>
+        </div>
+
+        <div class="panel" style="flex: 1;">
+            <div class="panel-header">RECURRING_OBLIGATIONS</div>
+            <div class="panel-content" id="billsList">
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">MASTER_LEDGER</div>
+        <div class="panel-content" style="padding: 0;">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">DATE</th>
+                        <th>DETAILS</th>
+                        <th style="text-align: right;">AMOUNT</th>
+                        <th style="width: 30px; text-align: center;">ACT</th>
+                    </tr>
+                </thead>
+                <tbody id="ledgerBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">FINANCIAL_TELEMETRY</div>
+        <div class="panel-content">
+            
+            <div class="hud-grid" style="grid-template-columns: 1fr;">
+                <div class="stat-box">
+                    <div style="font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px;">NET_CASHFLOW_30D</div>
+                    <div class="stat-val val-net" id="netFlow">$0.00</div>
+                </div>
+            </div>
+
+            <div class="hud-grid">
+                <div class="stat-box">
+                    <div style="font-size: 0.6rem; color: var(--text-dim);">INCOME</div>
+                    <div class="stat-val val-pos" id="totInc" style="font-size: 1.1rem;">$0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div style="font-size: 0.6rem; color: var(--text-dim);">EXPENSES</div>
+                    <div class="stat-val val-neg" id="totExp" style="font-size: 1.1rem;">$0.00</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label style="border-bottom: 1px solid #333; padding-bottom: 5px;">EXPENSE_DISTRIBUTION</label>
+                <div class="analytics-bar-wrap" id="distBar">
+                </div>
+                <div id="distLegend" style="display: flex; flex-direction: column; gap: 5px; margin-top: 10px; font-size: 0.75rem;">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const DB_KEY_TX = 'wos_finance_tx';
+    const DB_KEY_BILLS = 'wos_finance_bills';
+    
+    let txDB = JSON.parse(localStorage.getItem(DB_KEY_TX));
+    let billsDB = JSON.parse(localStorage.getItem(DB_KEY_BILLS));
+
+    const catColors = {
+        housing: '#3498db', auto: '#f39c12', food: '#2ecc71', 
+        education: '#9b59b6', tech: '#00e5ff', ent: '#e74c3c', misc: '#95a5a6'
+    };
+    const catLabels = {
+        housing: 'Housing', auto: 'Transport', food: 'Food', 
+        education: 'Education', tech: 'Hardware', ent: 'Entertainment', misc: 'Misc', income: 'Deposit'
+    };
+
+    if (!txDB || txDB.length === 0) {
+        const today = new Date().toISOString().split('T')[0];
+        txDB = [
+            { id: 1, type: 'inc', amt: 800.00, desc: 'Job Deposit', cat: 'income', date: today },
+            { id: 2, type: 'exp', amt: 50.00, desc: 'Car Gas Fill Up', cat: 'auto', date: today },
+            { id: 3, type: 'exp', amt: 100.00, desc: 'Groceries', cat: 'food', date: today },
+            { id: 4, type: 'exp', amt: 30.00, desc: 'Online Order', cat: 'tech', date: today },
+            { id: 5, type: 'exp', amt: 20.00, desc: 'Retail Purchase', cat: 'ent', date: today }
+        ];
+        localStorage.setItem(DB_KEY_TX, JSON.stringify(txDB));
+    }
+
+    if (!billsDB || billsDB.length === 0) {
+        billsDB = [
+            { id: 1, title: 'Educational Installment', amt: 400.00, due: '15th', paid: false },
+            { id: 2, title: 'Standard Premium', amt: 75.00, due: '22nd', paid: false },
+            { id: 3, title: 'Digital Subscriptions', amt: 15.00, due: '5th', paid: false }
+        ];
+        localStorage.setItem(DB_KEY_BILLS, JSON.stringify(billsDB));
+    }
+
+    function initApp() {
+        document.getElementById('txDate').valueAsDate = new Date();
+        document.querySelectorAll('input[name="txType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const catSelect = document.getElementById('txCat');
+                if(e.target.value === 'inc') catSelect.value = 'income';
+                else catSelect.value = 'food';
+            });
+        });
+        renderLedger();
+        renderBills();
+        calculateTelemetry();
+    }
+
+    function addTransaction() {
+        const type = document.querySelector('input[name="txType"]:checked').value;
+        const amt = parseFloat(document.getElementById('txAmt').value);
+        const desc = document.getElementById('txDesc').value.trim();
+        const cat = document.getElementById('txCat').value;
+        const date = document.getElementById('txDate').value;
+
+        if (!amt || !desc || !date) return alert("SYS_ERROR: INCOMPLETE_DATA_FIELDS");
+
+        const tx = { id: Date.now(), type, amt, desc, cat, date };
+        txDB.push(tx);
+        txDB.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem(DB_KEY_TX, JSON.stringify(txDB));
+        document.getElementById('txAmt').value = '';
+        document.getElementById('txDesc').value = '';
+        renderLedger();
+        calculateTelemetry();
+    }
+
+    function deleteTx(id) {
+        txDB = txDB.filter(t => t.id !== id);
+        localStorage.setItem(DB_KEY_TX, JSON.stringify(txDB));
+        renderLedger();
+        calculateTelemetry();
+    }
+
+    function renderLedger() {
+        const tbody = document.getElementById('ledgerBody');
+        tbody.innerHTML = "";
+        txDB.forEach(tx => {
+            const isExp = tx.type === 'exp';
+            const amtClass = isExp ? 'val-neg' : 'val-pos';
+            const prefix = isExp ? '-' : '+';
+            const d = new Date(tx.date);
+            const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+            tbody.innerHTML += `
+                <tr class="ledger-row">
+                    <td style="color: var(--text-dim);">${dateStr}</td>
+                    <td>
+                        <div class="tx-desc">${tx.desc}</div>
+                        <span class="tx-cat">${catLabels[tx.cat]}</span>
+                    </td>
+                    <td class="tx-amt ${amtClass}">${prefix}$${tx.amt.toFixed(2)}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-del" onclick="deleteTx(${tx.id})">X</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function toggleBill(id) {
+        const bill = billsDB.find(b => b.id === id);
+        if(bill) {
+            bill.paid = !bill.paid;
+            localStorage.setItem(DB_KEY_BILLS, JSON.stringify(billsDB));
+            renderBills();
+        }
+    }
+
+    function renderBills() {
+        const list = document.getElementById('billsList');
+        list.innerHTML = "";
+        billsDB.forEach(bill => {
+            const paidClass = bill.paid ? 'paid' : '';
+            list.innerHTML += `
+                <div class="bill-item ${paidClass}">
+                    <div>
+                        <div class="bill-title">${bill.title}</div>
+                        <div class="bill-meta">DUE: ${bill.due}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="bill-amt">$${bill.amt.toFixed(2)}</div>
+                        <input type="checkbox" class="chk-paid" ${bill.paid ? 'checked' : ''} onchange="toggleBill(${bill.id})">
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function calculateTelemetry() {
+        let totInc = 0; let totExp = 0; let catTotals = {};
+        txDB.forEach(tx => {
+            if (tx.type === 'inc') totInc += tx.amt;
+            else {
+                totExp += tx.amt;
+                catTotals[tx.cat] = (catTotals[tx.cat] || 0) + tx.amt;
+            }
+        });
+        const net = totInc - totExp;
+        document.getElementById('totInc').innerText = `$${totInc.toFixed(2)}`;
+        document.getElementById('totExp').innerText = `$${totExp.toFixed(2)}`;
+        const netEl = document.getElementById('netFlow');
+        netEl.innerText = `${net >= 0 ? '+' : '-'}$${Math.abs(net).toFixed(2)}`;
+        netEl.className = `stat-val ${net >= 0 ? 'val-net' : 'val-neg'}`;
+        renderDistribution(catTotals, totExp);
+    }
+
+    function renderDistribution(catTotals, totExp) {
+        const bar = document.getElementById('distBar');
+        const legend = document.getElementById('distLegend');
+        bar.innerHTML = ""; legend.innerHTML = "";
+        if (totExp === 0) return;
+        const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+        sortedCats.forEach(([cat, amt]) => {
+            const pct = (amt / totExp) * 100;
+            const color = catColors[cat];
+            bar.innerHTML += `<div class="bar-segment" style="width: ${pct}%; background: ${color};" title="${catLabels[cat]}: $${amt.toFixed(2)}"></div>`;
+            legend.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div style="width: 10px; height: 10px; background: ${color}; border-radius: 2px;"></div>
+                        <span style="color: var(--text-primary);">${catLabels[cat]}</span>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-dim); margin-right: 10px;">${pct.toFixed(1)}%</span>
+                        <span style="font-weight: bold;">$${amt.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    initApp();
+</script>
+</body>
+</html>

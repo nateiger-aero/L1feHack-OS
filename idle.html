@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // NEO_SHIBUYA_RUN</title>
+    <style>
+        :root {
+            /* TWEWY / JSR Aesthetic */
+            --bg-dark: #0a0a0a;
+            --jsr-yellow: #ffde00;
+            --jsr-pink: #ff0055;
+            --jsr-cyan: #00f0ff;
+            --text-light: #ffffff;
+            --font-main: 'Arial Black', Impact, sans-serif;
+        }
+
+        body { 
+            font-family: var(--font-main); background: var(--bg-dark); color: var(--text-light); 
+            margin: 0; padding: 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box; background-image: radial-gradient(circle at top right, #1a1a1a 0%, #000 100%);
+        }
+
+        /* HEADER */
+        header { 
+            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 4px solid var(--jsr-yellow); background: #000; flex-shrink: 0;
+            transform: skewX(-10deg); margin: 0 10px 15px 10px; box-shadow: 5px 5px 0 var(--jsr-pink);
+        }
+        header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; color: var(--jsr-yellow); text-transform: uppercase; transform: skewX(10deg); text-shadow: 2px 2px 0 var(--jsr-pink); }
+        .btn-return { 
+            background: var(--jsr-cyan); border: none; color: #000; padding: 8px 20px; 
+            cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.2s; text-transform: uppercase;
+            transform: skewX(10deg); box-shadow: 3px 3px 0 var(--jsr-pink);
+        }
+        .btn-return:hover { background: #fff; transform: skewX(10deg) translate(-2px, -2px); box-shadow: 5px 5px 0 var(--jsr-pink); }
+
+        .game-container { flex: 1; display: flex; flex-direction: column; gap: 15px; min-height: 0; }
+
+        /* ACTION CANVAS (TOP) */
+        .action-zone {
+            flex: 0.4; background: #000; position: relative; border: 3px solid var(--jsr-cyan);
+            box-shadow: 5px 5px 0 var(--jsr-yellow); transform: skewX(-2deg); margin: 0 10px;
+            overflow: hidden;
+        }
+        canvas { 
+            width: 100%; height: 100%; display: block; transform: skewX(2deg); 
+            background: linear-gradient(0deg, #111 0%, #222 50%, #000 100%);
+        }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: flex; justify-content: space-between; padding: 10px 20px; background: #111;
+            border-top: 2px solid var(--jsr-pink); border-bottom: 2px solid var(--jsr-pink);
+            font-size: 1.2rem; text-transform: uppercase;
+        }
+        .stat-val { color: var(--jsr-yellow); text-shadow: 1px 1px 0 var(--jsr-cyan); }
+
+        /* SHOP (BOTTOM) */
+        .shop-zone {
+            flex: 0.6; overflow-y: auto; padding: 0 10px 10px 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-content: flex-start;
+        }
+        .shop-zone::-webkit-scrollbar { width: 8px; }
+        .shop-zone::-webkit-scrollbar-thumb { background: var(--jsr-pink); }
+
+        .tier-card {
+            background: rgba(20, 20, 20, 0.9); border: 2px solid #333; padding: 15px;
+            display: flex; flex-direction: column; gap: 10px; transition: 0.2s;
+            border-left: 5px solid var(--jsr-cyan);
+        }
+        .tier-card.locked { opacity: 0.4; filter: grayscale(100%); pointer-events: none; }
+        .tier-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #555; padding-bottom: 5px;}
+        .tier-title { font-size: 1.1rem; color: var(--jsr-yellow); }
+        .tier-dps { font-size: 0.8rem; color: var(--jsr-cyan); }
+        
+        .upgrade-row { display: flex; gap: 10px; }
+        .upg-btn {
+            flex: 1; background: #000; border: 1px solid #555; color: #fff; padding: 8px 5px;
+            display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.1s;
+            font-family: inherit;
+        }
+        .upg-btn:hover:not(:disabled) { border-color: var(--jsr-pink); background: #220011; }
+        .upg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .upg-name { font-size: 0.7rem; color: #aaa; margin-bottom: 2px; text-transform: uppercase;}
+        .upg-lvl { font-size: 0.9rem; font-weight: bold; color: #fff; }
+        .upg-cost { font-size: 0.7rem; color: var(--jsr-yellow); margin-top: 2px; }
+
+        #damageFlash { position: absolute; top:0; left:0; width: 100%; height: 100%; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.05s; z-index: 5;}
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BREAK // NEO_SHIBUYA_RUN</h1>
+    <button class="btn-return" onclick="window.location.href='break.html'">RETURN</button>
+</header>
+
+<div class="game-container">
+    
+    <div class="action-zone">
+        <div id="damageFlash"></div>
+        <canvas id="actionCanvas"></canvas>
+    </div>
+
+    <div class="stats-bar">
+        <div>VIBES (CREDITS): <span class="stat-val" id="credDisplay">0</span></div>
+        <div>TOTAL DPS: <span class="stat-val" id="dpsDisplay" style="color:var(--jsr-cyan)">0</span></div>
+        <div>STREET_REP (WAVE): <span class="stat-val" id="waveDisplay" style="color:var(--jsr-pink)">1</span></div>
+    </div>
+
+    <div class="shop-zone" id="shopContainer">
+        </div>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('actionCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Resize canvas to match container
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // --- GAME STATE ---
+    let credits = 0;
+    let wave = 1;
+    let enemiesDefeated = 0;
+    
+    // Derived Stats
+    let totalDps = 0;
+    let baseDamage = 1;
+    let goldMultiplier = 1;
+
+    // --- ENEMY LOGIC ---
+    let enemy = {
+        x: canvas.width + 50,
+        y: canvas.height / 2 + 20,
+        hp: 10,
+        maxHp: 10,
+        icon: '👾',
+        state: 'ENTERING' // ENTERING, FIGHTING, DEAD
+    };
+
+    const enemyIcons = ['👾','🤖','🦇','🦹','💀','👺','👽','🧟'];
+
+    function spawnEnemy() {
+        let baseHp = 10 * Math.pow(1.2, wave - 1);
+        enemy.maxHp = baseHp;
+        enemy.hp = baseHp;
+        enemy.x = canvas.width + 50;
+        enemy.icon = enemyIcons[Math.floor(Math.random() * enemyIcons.length)];
+        enemy.state = 'ENTERING';
+    }
+
+    // --- VISUAL EFFECTS ---
+    let floatingTexts = [];
+    let backgroundOffset = 0;
+    let playerYOffset = 0;
+    let frameCount = 0;
+    let playerStrikeAnim = 0;
+    let playerAttackTimer = 0; // Tracks the automatic base attack
+
+    // --- UPGRADE DATA (10 Tiers) ---
+    // Costs scale: baseCost * 1.15^level
+    const tiers = [
+        { id: 0, name: "GRAFFITI_SPRAY", baseCost: 10, baseDmg: 1, defaultSpd: 2.0, levels: [0,0,0], upgNames: ["Toxicity (DMG)", "Shake (SPD)", "Tips (GOLD)"] },
+        { id: 1, name: "MAGNET_SKATES", baseCost: 250, baseDmg: 5, defaultSpd: 3.0, levels: [0,0,0], upgNames: ["Bearings (DMG)", "Aero (SPD)", "Sparks (GOLD)"] },
+        { id: 2, name: "NEON_BAT", baseCost: 1500, baseDmg: 20, defaultSpd: 2.5, levels: [0,0,0], upgNames: ["Titanium (DMG)", "Grip (SPD)", "Mug (GOLD)"] },
+        { id: 3, name: "BOOMBOX", baseCost: 10000, baseDmg: 100, defaultSpd: 4.0, levels: [0,0,0], upgNames: ["Bass (DMG)", "BPM (SPD)", "Hype (GOLD)"] },
+        { id: 4, name: "HACKED_DRONE", baseCost: 75000, baseDmg: 400, defaultSpd: 1.5, levels: [0,0,0], upgNames: ["Laser (DMG)", "Rotors (SPD)", "Scan (GOLD)"] },
+        { id: 5, name: "CYBER_DECK", baseCost: 500000, baseDmg: 2000, defaultSpd: 5.0, levels: [0,0,0], upgNames: ["Overclock (DMG)", "Bandwidth (SPD)", "Mine (GOLD)"] },
+        { id: 6, name: "NOISE_BLASTER", baseCost: 3000000, baseDmg: 10000, defaultSpd: 3.0, levels: [0,0,0], upgNames: ["Feedback (DMG)", "Auto-Tune (SPD)", "Busking (GOLD)"] },
+        { id: 7, name: "HOVERBOARD", baseCost: 25000000, baseDmg: 50000, defaultSpd: 2.0, levels: [0,0,0], upgNames: ["Thruster (DMG)", "Anti-Grav (SPD)", "Tricks (GOLD)"] },
+        { id: 8, name: "NEURAL_AMP", baseCost: 150000000, baseDmg: 250000, defaultSpd: 1.0, levels: [0,0,0], upgNames: ["Synapse (DMG)", "Reflex (SPD)", "Data (GOLD)"] },
+        { id: 9, name: "REAPER_ENGINE", baseCost: 1000000000, baseDmg: 1000000, defaultSpd: 5.0, levels: [0,0,0], upgNames: ["Void Core (DMG)", "Tachyon (SPD)", "Harvest (GOLD)"] }
+    ];
+
+    // Gear auto-attack timers
+    let attackTimers = new Array(10).fill(0);
+
+    // --- MATH & FORMATTING ---
+    function formatNum(num) {
+        if (num < 1000) return Math.floor(num);
+        if (num < 1000000) return (num / 1000).toFixed(2) + 'K';
+        if (num < 1000000000) return (num / 1000000).toFixed(2) + 'M';
+        return (num / 1000000000).toFixed(2) + 'B';
+    }
+
+    function getUpgradeCost(tierId, upgIdx) {
+        const t = tiers[tierId];
+        const lvl = t.levels[upgIdx];
+        // Upgrade 0 (DMG) multiplier: 1.15. Upgrade 1 (SPD): 1.3 (harder to max). Upgrade 2 (GOLD): 1.25.
+        const mults = [1.15, 1.3, 1.25];
+        return t.baseCost * Math.pow(mults[upgIdx], lvl);
+    }
+
+    function calculateStats() {
+        totalDps = 0;
+        goldMultiplier = 1;
+
+        tiers.forEach((t, idx) => {
+            if (t.levels[0] > 0 || t.levels[1] > 0 || t.levels[2] > 0) {
+                let dmg = t.baseDmg * t.levels[0];
+                let spd = Math.max(0.2, t.defaultSpd * Math.pow(0.95, t.levels[1])); 
+                
+                if (t.levels[0] > 0) {
+                    totalDps += dmg / spd;
+                }
+                
+                goldMultiplier += (t.levels[2] * 0.05); 
+            }
+        });
+
+        // The Character's Base Auto-Attack damage scales with overall DPS
+        baseDamage = 1 + (totalDps * 0.05);
+        
+        document.getElementById('dpsDisplay').innerText = formatNum(totalDps + baseDamage); // Show combined DPS
+        renderShop();
+    }
+
+    // --- INTERACTION ---
+    function buyUpgrade(tierId, upgIdx) {
+        const cost = getUpgradeCost(tierId, upgIdx);
+        const t = tiers[tierId];
+        
+        if (credits >= cost && t.levels[upgIdx] < 100) {
+            credits -= cost;
+            t.levels[upgIdx]++;
+            calculateStats();
+            updateUI();
+        }
+    }
+
+    function dealDamage(amt, isCrit = false) {
+        if (enemy.state !== 'FIGHTING') return;
+        
+        enemy.hp -= amt;
+        
+        // Spawn floating text near the enemy
+        floatingTexts.push({
+            x: canvas.width/2 + 20 + (Math.random()*60),
+            y: canvas.height/2 - 10 - (Math.random()*40),
+            text: formatNum(amt),
+            life: 30,
+            color: isCrit ? 'var(--jsr-yellow)' : '#fff'
+        });
+
+        // Flash effect
+        const flash = document.getElementById('damageFlash');
+        flash.style.opacity = '0.3';
+        setTimeout(() => flash.style.opacity = '0', 50);
+
+        if (enemy.hp <= 0) {
+            killEnemy();
+        }
+    }
+
+    function killEnemy() {
+        enemy.state = 'DEAD';
+        enemiesDefeated++;
+        
+        // Reward
+        let reward = (5 + (wave * 2)) * goldMultiplier;
+        credits += reward;
+        
+        // Advance Wave
+        if (enemiesDefeated >= 10) {
+            wave++;
+            enemiesDefeated = 0;
+            document.getElementById('waveDisplay').innerText = wave;
+        }
+
+        updateUI();
+        
+        // Short delay before next enemy
+        setTimeout(spawnEnemy, 500);
+    }
+
+    // --- UI RENDERING ---
+    function updateUI() {
+        document.getElementById('credDisplay').innerText = formatNum(credits);
+        
+        // Update button states efficiently
+        tiers.forEach(t => {
+            for(let i=0; i<3; i++) {
+                let btn = document.getElementById(`btn-${t.id}-${i}`);
+                if (btn) {
+                    let cost = getUpgradeCost(t.id, i);
+                    btn.disabled = credits < cost || t.levels[i] >= 100;
+                    btn.querySelector('.upg-cost').innerText = t.levels[i] >= 100 ? 'MAX' : formatNum(cost) + ' V';
+                    btn.querySelector('.upg-lvl').innerText = 'Lv.' + t.levels[i];
+                }
+            }
+            
+            // Unlock visibility (if previous tier has at least 1 upgrade, or it's tier 0)
+            let card = document.getElementById(`card-${t.id}`);
+            if (card) {
+                let isUnlocked = t.id === 0 || (tiers[t.id-1].levels[0] > 0);
+                if (isUnlocked) card.classList.remove('locked');
+                else card.classList.add('locked');
+            }
+        });
+    }
+
+    function renderShop() {
+        const container = document.getElementById('shopContainer');
+        container.innerHTML = '';
+
+        tiers.forEach((t) => {
+            // Calculate specific DPS of this tier
+            let dmg = t.baseDmg * t.levels[0];
+            let spd = Math.max(0.2, t.defaultSpd * Math.pow(0.95, t.levels[1]));
+            let tierDps = t.levels[0] > 0 ? (dmg / spd) : 0;
+
+            let isUnlocked = t.id === 0 || (t.id > 0 && tiers[t.id-1].levels[0] > 0);
+
+            let html = `
+                <div class="tier-card ${isUnlocked ? '' : 'locked'}" id="card-${t.id}">
+                    <div class="tier-header">
+                        <span class="tier-title">${t.name}</span>
+                        <span class="tier-dps">${formatNum(tierDps)} DPS</span>
+                    </div>
+                    <div class="upgrade-row">
+            `;
+
+            for(let i=0; i<3; i++) {
+                let cost = getUpgradeCost(t.id, i);
+                let canAfford = credits >= cost && t.levels[i] < 100;
+                
+                html += `
+                    <button class="upg-btn" id="btn-${t.id}-${i}" onclick="buyUpgrade(${t.id}, ${i})" ${canAfford ? '' : 'disabled'}>
+                        <span class="upg-name">${t.upgNames[i]}</span>
+                        <span class="upg-lvl">Lv.${t.levels[i]}</span>
+                        <span class="upg-cost">${t.levels[i] >= 100 ? 'MAX' : formatNum(cost) + ' V'}</span>
+                    </button>
+                `;
+            }
+
+            html += `</div></div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    // --- CANVAS ENGINE ---
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Parallax Background
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 2;
+        backgroundOffset = (backgroundOffset + 2) % 40;
+        for(let i = -40; i < canvas.width; i+=40) {
+            ctx.beginPath();
+            ctx.moveTo(i - backgroundOffset, 0);
+            ctx.lineTo(i - backgroundOffset - 50, canvas.height); // Skewed lines
+            ctx.stroke();
+        }
+
+        // Draw Player (Headphones Icon)
+        playerYOffset = Math.sin(frameCount * 0.1) * 5;
+        let playerXOffset = playerStrikeAnim > 0 ? 30 : 0; // Lunge forward if striking
+        if (playerStrikeAnim > 0) playerStrikeAnim--;
+
+        ctx.font = '60px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎧', 80 + playerXOffset, canvas.height/2 + playerYOffset);
+
+        // Draw Enemy
+        if (enemy.state !== 'DEAD') {
+            if (enemy.state === 'ENTERING') {
+                enemy.x -= 10;
+                if (enemy.x <= canvas.width/2 + 50) enemy.state = 'FIGHTING';
+            }
+
+            let enemyShake = enemy.state === 'FIGHTING' ? Math.sin(frameCount * 0.5) * 3 : 0;
+            
+            ctx.font = '80px Arial';
+            ctx.fillText(enemy.icon, enemy.x + enemyShake, canvas.height/2 + 20);
+
+            // HP Bar
+            if (enemy.state === 'FIGHTING') {
+                ctx.fillStyle = '#ff0055';
+                ctx.fillRect(enemy.x - 40, canvas.height/2 - 40, 80, 8);
+                ctx.fillStyle = '#00f0ff';
+                ctx.fillRect(enemy.x - 40, canvas.height/2 - 40, 80 * (enemy.hp / enemy.maxHp), 8);
+                ctx.strokeStyle = '#fff';
+                ctx.strokeRect(enemy.x - 40, canvas.height/2 - 40, 80, 8);
+            }
+        }
+
+        // Draw Floating Text
+        ctx.font = 'bold 24px "Arial Black", Impact';
+        for(let i = floatingTexts.length - 1; i >= 0; i--) {
+            let ft = floatingTexts[i];
+            ctx.fillStyle = ft.color;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            
+            ctx.strokeText(ft.text, ft.x, ft.y);
+            ctx.fillText(ft.text, ft.x, ft.y);
+            
+            ft.y -= 2;
+            ft.life--;
+            if (ft.life <= 0) floatingTexts.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        frameCount++;
+
+        if (enemy.state === 'FIGHTING') {
+            
+            // 1. The Main Character's Auto-Attack (1 strike per second)
+            playerAttackTimer++;
+            if (playerAttackTimer >= 60) { // Assuming 60 frames per second
+                dealDamage(baseDamage, true); // True makes it flash yellow for the main attack
+                playerStrikeAnim = 10; // Trigger lunge animation for 10 frames
+                playerAttackTimer = 0;
+            }
+
+            // 2. The Gear/Crew Auto-Attacks
+            tiers.forEach((t, idx) => {
+                if (t.levels[0] > 0) {
+                    attackTimers[idx]++;
+                    let spd = Math.max(0.2, t.defaultSpd * Math.pow(0.95, t.levels[1]));
+                    let framesNeeded = spd * 60; 
+                    
+                    if (attackTimers[idx] >= framesNeeded) {
+                        dealDamage(t.baseDmg * t.levels[0]);
+                        attackTimers[idx] = 0;
+                    }
+                }
+            });
+        }
+
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // --- BOOT ---
+    calculateStats(); 
+    spawnEnemy();
+    gameLoop();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // PERFORMANCE_RECORDS</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --text-primary: #e0faff; 
+            --text-dim: #94e2ed;
+            --neon-dim: rgba(0, 229, 255, 0.2);
+            --neon-warn: #f39c12;
+            --neon-success: #2ecc71;
+            --neon-purple: #9b59b6;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 1100px; margin: 0 auto; border: 1px solid var(--neon-cyan); 
+            background: rgba(0, 10, 15, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        }
+
+        header { border-bottom: 2px solid var(--neon-cyan); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-cyan); }
+
+        .btn-return { background: none; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: 0.3s; }
+        .btn-return:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* Navigation Tabs */
+        .tab-nav { display: flex; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--neon-dim); margin-top: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: var(--text-dim); cursor: pointer; font-family: inherit; font-size: 0.8rem; font-weight: bold; letter-spacing: 2px; transition: 0.3s; }
+        .tab-btn.active { color: var(--neon-cyan); border-bottom: 3px solid var(--neon-cyan); background: rgba(0, 229, 255, 0.1); }
+        .tab-content { display: none; padding: 20px 0; animation: slide-in 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { font-size: 0.9rem; text-transform: uppercase; border-left: 4px solid var(--neon-cyan); padding-left: 10px; margin: 0 0 15px 0; color: var(--neon-cyan); letter-spacing: 1px; }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; margin-bottom: 5px; margin-top: 15px; }
+        
+        input, select, textarea { background: #000; border: 1px solid var(--neon-dim); color: #fff; padding: 10px; font-family: inherit; outline: none; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus, textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+
+        .panel { background: rgba(0, 229, 255, 0.02); border: 1px solid var(--neon-dim); padding: 20px; position: relative; margin-bottom: 20px; }
+        .btn-commit { width: 100%; padding: 15px; background: none; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); cursor: pointer; font-weight: bold; letter-spacing: 5px; margin-top: 10px; font-family: inherit; font-size: 0.9rem; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: 0.3s; }
+        .btn-commit:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 25px var(--neon-cyan); }
+
+        /* Timeline Logbook */
+        .log-container { max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .log-entry { border-left: 2px solid var(--neon-dim); padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.4); position: relative; }
+        .log-entry::before { content: ''; position: absolute; left: -6px; top: 15px; width: 10px; height: 10px; background: var(--neon-cyan); border-radius: 50%; box-shadow: 0 0 5px var(--neon-cyan); }
+        .log-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .log-title { font-weight: bold; font-size: 1rem; color: #fff; }
+        .log-date { font-size: 0.6rem; color: var(--text-dim); }
+        .tag { font-size: 0.6rem; padding: 3px 8px; font-weight: bold; display: inline-block; margin-top: 8px; border: 1px solid transparent; }
+        .tag-pr { color: var(--neon-cyan); border-color: var(--neon-cyan); background: rgba(0,229,255,0.1); }
+        .tag-init { color: var(--neon-warn); border-color: var(--neon-warn); background: rgba(243,156,18,0.1); }
+        .tag-comp { color: var(--neon-success); border-color: var(--neon-success); background: rgba(46,204,113,0.1); }
+        .tag-streak { color: var(--neon-purple); border-color: var(--neon-purple); background: rgba(155,89,182,0.1); }
+
+        /* Achievement Grid */
+        .achv-section-title { font-size: 0.8rem; color: #fff; border-bottom: 1px solid var(--neon-dim); padding-bottom: 5px; margin: 30px 0 15px 0; letter-spacing: 2px; }
+        .achv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; max-height: 600px; overflow-y: auto; padding-right: 10px; }
+        
+        .achv-card { border: 1px solid #333; background: #0a0a0a; padding: 15px; display: flex; gap: 15px; align-items: center; opacity: 0.4; transition: 0.4s ease; filter: grayscale(100%); position: relative; overflow: hidden; }
+        .achv-card.unlocked { border-color: var(--neon-cyan); background: rgba(0, 229, 255, 0.05); opacity: 1; filter: grayscale(0%); box-shadow: 0 0 15px rgba(0,229,255,0.1); }
+        
+        .achv-icon { width: 50px; height: 50px; min-width: 50px; border: 1px dashed var(--neon-dim); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; background: rgba(0,0,0,0.5); }
+        .achv-card.unlocked .achv-icon { border: 2px solid var(--neon-cyan); background: var(--neon-cyan); color: black; box-shadow: 0 0 10px var(--neon-cyan); }
+        
+        .achv-info { flex: 1; }
+        .achv-title { font-weight: bold; font-size: 0.85rem; color: #fff; letter-spacing: 1px; margin-bottom: 4px; }
+        .achv-desc { font-size: 0.6rem; color: var(--text-dim); line-height: 1.3; }
+        
+        /* Auto vs Manual Badges */
+        .badge-type { font-size: 0.5rem; font-weight: bold; margin-top: 8px; display: inline-block; padding: 2px 5px; border-radius: 2px; }
+        .badge-auto { background: #111; color: #555; border: 1px solid #333; }
+        .achv-card.unlocked .badge-auto { background: rgba(0,229,255,0.1); color: var(--neon-cyan); border-color: var(--neon-cyan); }
+        
+        .badge-manual { background: #111; color: var(--neon-warn); border: 1px dashed var(--neon-warn); cursor: pointer; transition: 0.3s; }
+        .badge-manual:hover { background: var(--neon-warn); color: black; }
+        .achv-card.unlocked .badge-manual { background: rgba(46,204,113,0.1); color: var(--neon-success); border: 1px solid var(--neon-success); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-dim); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_HEALTH // PERFORMANCE_RECORDS</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('logbook')">01_PERSONAL_LOGBOOK</button>
+        <button class="tab-btn" onclick="switchTab('achievements')">02_SYSTEM_ACHIEVEMENTS</button>
+    </div>
+
+    <div id="logbook" class="tab-content active" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px;">
+        <div class="panel" style="margin: 0; align-self: start;">
+            <h2>RECORD_NEW_EVENT</h2>
+            <label>EVENT_CLASSIFICATION:</label>
+            <select id="logType">
+                <option value="PR">PERSONAL RECORD (Gym/Stats)</option>
+                <option value="INIT">INITIATION (Started Project)</option>
+                <option value="COMP">COMPLETION (Finished Task/Book)</option>
+                <option value="STREAK">STREAK (Habit Milestone)</option>
+            </select>
+            <label>EVENT_DESIGNATION:</label>
+            <input type="text" id="logTitle" placeholder="e.g. 225lb Bench Press">
+            <label>EVENT_DETAILS / NOTES:</label>
+            <textarea id="logNotes" placeholder="Enter supporting data or reflections here..."></textarea>
+            <label>TIMESTAMP:</label>
+            <input type="date" id="logDate">
+            <button class="btn-commit" onclick="saveRecord()">COMMIT_TO_LOG</button>
+        </div>
+
+        <div class="panel" style="margin: 0;">
+            <h2>ARCHIVED_MILESTONES</h2>
+            <div class="log-container" id="logDisplay"></div>
+        </div>
+    </div>
+
+    <div id="achievements" class="tab-content">
+        <h2>GLOBAL_UNLOCKS & SYSTEM STATUS</h2>
+        <p style="font-size: 0.7rem; color: var(--text-dim);">[ AUTO-TRACKED ] nodes scan database memory. [ MANUAL OVERRIDE ] nodes require user confirmation.</p>
+        
+        <div id="achievementsContainer">
+            </div>
+    </div>
+</div>
+
+<script>
+    // --- BACKGROUND BOOT TRACKER ---
+    function trackBootSequence() {
+        const today = new Date().toISOString().split('T')[0];
+        let history = JSON.parse(localStorage.getItem('wos_login_history')) || [];
+        if (!history.includes(today)) {
+            history.push(today);
+            localStorage.setItem('wos_login_history', JSON.stringify(history));
+        }
+    }
+    trackBootSequence();
+
+    // --- TAB LOGIC ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+
+        if (tabId === 'achievements') {
+            renderAchievements();
+        }
+    }
+
+    document.getElementById('logDate').valueAsDate = new Date();
+
+    // --- LOGBOOK LOGIC ---
+    function saveRecord() {
+        const title = document.getElementById('logTitle').value.trim();
+        if (!title) return alert("SYS_ERROR: EVENT_DESIGNATION REQUIRED.");
+        const record = { 
+            id: Date.now(), title, 
+            type: document.getElementById('logType').value, 
+            notes: document.getElementById('logNotes').value.trim(), 
+            date: document.getElementById('logDate').value 
+        };
+        let archive = JSON.parse(localStorage.getItem('wos_records')) || [];
+        archive.push(record);
+        archive.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('wos_records', JSON.stringify(archive));
+        document.getElementById('logTitle').value = ""; document.getElementById('logNotes').value = "";
+        renderLogs();
+    }
+
+    function renderLogs() {
+        const container = document.getElementById('logDisplay');
+        const archive = JSON.parse(localStorage.getItem('wos_records')) || [];
+        container.innerHTML = "";
+        if (archive.length === 0) return container.innerHTML = `<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">[ NO RECORDS FOUND ]</p>`;
+
+        const typeMap = {
+            "PR": { label: "PERSONAL_RECORD", class: "tag-pr" }, "INIT": { label: "INITIATION_PHASE", class: "tag-init" },
+            "COMP": { label: "COMPLETION_PHASE", class: "tag-comp" }, "STREAK": { label: "ENDURANCE_STREAK", class: "tag-streak" }
+        };
+
+        archive.forEach(rec => {
+            const tag = typeMap[rec.type];
+            container.innerHTML += `
+                <div class="log-entry">
+                    <div class="log-header"><div class="log-title">${rec.title}</div><div class="log-date">${rec.date}</div></div>
+                    <div class="log-notes">${rec.notes || "No supplemental data provided."}</div>
+                    <div class="tag ${tag.class}">${tag.label}</div>
+                    <button onclick="deleteRecord(${rec.id})" style="position:absolute; bottom:15px; right:15px; background:none; border:none; color:#ff5555; cursor:pointer; font-size:0.6rem;">[ DELETE ]</button>
+                </div>`;
+        });
+    }
+
+    function deleteRecord(id) {
+        let archive = JSON.parse(localStorage.getItem('wos_records')) || [];
+        localStorage.setItem('wos_records', JSON.stringify(archive.filter(r => r.id !== id)));
+        renderLogs();
+    }
+
+    // --- SYSTEM ACHIEVEMENTS ENGINE (50 TOTAL) ---
+    // Helper checks
+    const checkLen = (key, target) => (JSON.parse(localStorage.getItem(key)) || []).length >= target;
+    const checkCompound = () => (JSON.parse(localStorage.getItem('wos_workouts')) || []).filter(w => w.isCompound).length >= 50;
+    const sumAllData = () => ['wos_workouts', 'wos_health_goals', 'wos_records', 'wos_activities'].reduce((acc, key) => acc + (JSON.parse(localStorage.getItem(key)) || []).length, 0) >= 50;
+
+    const achievementsDB = [
+        // 01_SYS_CORE
+        { cat: "01_SYS_CORE", id: "c1", title: "SYSTEM_INITIALIZED", desc: "Establish a link with W-OS.", icon: "⏻", type: "auto", check: () => true },
+        { cat: "01_SYS_CORE", id: "c2", title: "MAINFRAME_ADDICT", desc: "Boot the system 7 consecutive days.", icon: "🔥", type: "auto", check: () => checkLen('wos_login_history', 7) },
+        { cat: "01_SYS_CORE", id: "c3", title: "GHOST_IN_THE_MACHINE", desc: "Maintain a 30-day login streak.", icon: "👻", type: "auto", check: () => checkLen('wos_login_history', 30) },
+        { cat: "01_SYS_CORE", id: "c4", title: "DEEP_DIVE_ARCHAEOLOGIST", desc: "Log 10 manual milestones in the Records database.", icon: "💾", type: "auto", check: () => checkLen('wos_records', 10) },
+        { cat: "01_SYS_CORE", id: "c5", title: "NODE_DISCOVERED", desc: "Successfully access and configure every module in the Hub.", icon: "🕸️", type: "manual" },
+        { cat: "01_SYS_CORE", id: "c6", title: "PACKET_SNIFFER", desc: "Save a total of 50 items across all system databases.", icon: "📦", type: "auto", check: () => sumAllData() },
+        { cat: "01_SYS_CORE", id: "c7", title: "HEADLESS_SERVER", desc: "Accumulate 100 total hours in the background focus timer.", icon: "⏳", type: "manual" },
+        { cat: "01_SYS_CORE", id: "c8", title: "FIRMWARE_FLASHED", desc: "Manually update and save a biometric or habit profile.", icon: "⚡", type: "auto", check: () => checkLen('wos_health_goals', 1) },
+        { cat: "01_SYS_CORE", id: "c9", title: "Y2K_COMPLIANT", desc: "Complete 100% of your daily protocol targets without a single error.", icon: "📟", type: "manual" },
+        { cat: "01_SYS_CORE", id: "c10", title: "SYSTEM_ADMIN", desc: "Create and save 5 custom Routine/Workout presets.", icon: "🛡️", type: "manual" },
+
+        // 02_KINETICS
+        { cat: "02_KINETICS & STRENGTH", id: "k1", title: "IRON_SYNTHESIS", desc: "Commit your first workout to the Strength Archive.", icon: "🦾", type: "auto", check: () => checkLen('wos_workouts', 1) },
+        { cat: "02_KINETICS & STRENGTH", id: "k2", title: "HYPERTROPHY_PROTOCOL", desc: "Log 20 complete resistance training sessions.", icon: "🏋️", type: "auto", check: () => checkLen('wos_workouts', 20) },
+        { cat: "02_KINETICS & STRENGTH", id: "k3", title: "COMPOUND_FRACTURE", desc: "Execute 50 compound muscle group exercises.", icon: "🦴", type: "auto", check: () => checkCompound() },
+        { cat: "02_KINETICS & STRENGTH", id: "k4", title: "PROGRESSIVE_OVERLOAD", desc: "Increase load (lbs) on a specific exercise for 3 consecutive weeks.", icon: "📈", type: "manual" },
+        { cat: "02_KINETICS & STRENGTH", id: "k5", title: "HIGH_ALTITUDE_CALIBRATION", desc: "Log an outdoor kinetic session at an elevation over 7,000 ft.", icon: "⛰️", type: "manual" },
+        { cat: "02_KINETICS & STRENGTH", id: "k6", title: "SUB_ZERO_OPERATIVE", desc: "Complete an outdoor activity when the temperature drops below freezing.", icon: "❄️", type: "manual" },
+        { cat: "02_KINETICS & STRENGTH", id: "k7", title: "WIND_RESISTANCE_MATRIX", desc: "Complete a 3+ mile outdoor run/ride on a high-wind day.", icon: "🌪️", type: "manual" },
+        { cat: "02_KINETICS & STRENGTH", id: "k8", title: "TACTICAL_SCOUT", desc: "Save your first local route in the Activities Locator.", icon: "📡", type: "auto", check: () => checkLen('wos_activities', 1) },
+        { cat: "02_KINETICS & STRENGTH", id: "k9", title: "ENDURANCE_FRAMEWORK", desc: "Accumulate 50 total miles of cardiovascular travel.", icon: "👟", type: "manual" },
+        { cat: "02_KINETICS & STRENGTH", id: "k10", title: "CENTURION_STATUS", desc: "Reach the massive milestone of 100 total logged workouts.", icon: "💯", type: "auto", check: () => checkLen('wos_workouts', 100) },
+
+        // 03_FUEL
+        { cat: "03_FUEL & LOGISTICS", id: "f1", title: "DATA_CONSUMPTION", desc: "Log your first recipe into the Culinary Database.", icon: "🍲", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f2", title: "CULINARY_ALGORITHM", desc: "Save 10 complete recipes.", icon: "🍳", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f3", title: "MACRO_COMPLIANCE", desc: "Hit your target Protein/Carb/Fat distribution perfectly 3 days in a row.", icon: "📊", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f4", title: "METABOLIC_SHIFT", desc: "Transition your weight goal trajectory.", icon: "⚖️", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f5", title: "BULK_PROCUREMENT", desc: "Save over $20 in a single week using the Unit Price Cost Optimization tool.", icon: "💰", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f6", title: "SUPPLY_CHAIN_MASTER", desc: "Log 50 total items in the Requisition Log.", icon: "🛒", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f7", title: "PANTRY_AUDIT", desc: "Check off 20 procured items from the active grocery list.", icon: "✅", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f8", title: "KINETIC_FUEL_SYNTHESIS", desc: "Successfully prep and log a high-protein target meal.", icon: "🥩", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f9", title: "HYDRATION_RESERVOIR", desc: "Hit your daily water intake target 7 days in a row.", icon: "💧", type: "manual" },
+        { cat: "03_FUEL & LOGISTICS", id: "f10", title: "SUSTENANCE_ROUTINE", desc: "Track nutritional inputs for 14 consecutive days.", icon: "📅", type: "manual" },
+
+        // 04_NEURAL_NET
+        { cat: "04_NEURAL_NET (Mind)", id: "n1", title: "TASK_EXECUTION", desc: "Check off your first To-Do list item.", icon: "📋", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n2", title: "POMODORO_SYNDICATE", desc: "Complete 5 uninterrupted focus timer sessions.", icon: "⏱️", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n3", title: "ACADEMIC_OVERRIDE", desc: "Log 10 hours of dedicated study or Capstone project focus time.", icon: "🎓", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n4", title: "EVIDENCE_COLLECTION", desc: "Complete and log a major investigative or academic milestone.", icon: "🔬", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n5", title: "TIMELINE_SECURED", desc: "Successfully plan out a full 7-day calendar without conflicts.", icon: "🗓️", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n6", title: "COGNITIVE_ENDURANCE", desc: "Maintain a 14-day study/productivity streak.", icon: "🧠", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n7", title: "PRIORITY_ROUTING", desc: "Complete all 'High-Priority' flagged tasks in a single 24hr cycle.", icon: "🚨", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n8", title: "DEFRAG_COMPLETE", desc: "Clear 20 completed tasks from the active To-Do archive.", icon: "🧹", type: "manual" },
+        { cat: "04_NEURAL_NET (Mind)", id: "n9", title: "INVESTIGATIVE_ANALYSIS", desc: "Establish a specific, custom directive for professional/academic growth.", icon: "🔎", type: "auto", check: () => { const goals = JSON.parse(localStorage.getItem('wos_health_goals')) || []; return goals.some(g => g.customDirectives && g.customDirectives.length > 0); } },
+        { cat: "04_NEURAL_NET (Mind)", id: "n10", title: "NEURAL_LINK_ESTABLISHED", desc: "Utilize the Mind module tools 30 separate times.", icon: "🌐", type: "manual" },
+
+        // 05_RECOVERY
+        { cat: "05_RECOVERY & CALIBRATION", id: "r1", title: "SLEEP_MODE_ENGAGED", desc: "Successfully hit your target sleep duration for one night.", icon: "🌙", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r2", title: "CIRCADIAN_RHYTHM", desc: "Hit sleep and wake time targets 7 consecutive days.", icon: "🌅", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r3", title: "BEHAVIOR_MOD_SUCCESS", desc: "Maintain an INITIATE (Build) habit for 21 days.", icon: "🌱", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r4", title: "BAD_SECTOR_ISOLATED", desc: "Maintain a TERMINATE (Break) habit for 14 days.", icon: "🛑", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r5", title: "EMULATION_STATE", desc: "Log a dedicated gaming or digital-downtime brain break.", icon: "🎮", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r6", title: "AUDIO_EXTRACTOR", desc: "Utilize an archived playlist or soundscape for a rest block.", icon: "🎧", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r7", title: "SYSTEM_COOLANT", desc: "Log 5 dedicated meditation or deep-rest sessions.", icon: "🧘", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r8", title: "STRESS_TEST_PASSED", desc: "Complete a high-load kinetic/academic week without missing a recovery target.", icon: "🛡️", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r9", title: "ANALOG_RETREAT", desc: "Log a 24-hour cycle with zero non-essential screen time.", icon: "🌲", type: "manual" },
+        { cat: "05_RECOVERY & CALIBRATION", id: "r10", title: "ZENITH_STATE", desc: "Hit 100% of your Body, Mind, and Spirit daily targets in a single day.", icon: "✨", type: "manual" }
+    ];
+
+    function toggleManualAchv(id) {
+        let claims = JSON.parse(localStorage.getItem('wos_manual_achv')) || [];
+        if (claims.includes(id)) claims = claims.filter(c => c !== id);
+        else claims.push(id);
+        localStorage.setItem('wos_manual_achv', JSON.stringify(claims));
+        renderAchievements();
+    }
+
+    function renderAchievements() {
+        const container = document.getElementById('achievementsContainer');
+        container.innerHTML = "";
+        
+        let currentCat = "";
+        let grid;
+        let manualClaims = JSON.parse(localStorage.getItem('wos_manual_achv')) || [];
+
+        achievementsDB.forEach(achv => {
+            if (achv.cat !== currentCat) {
+                container.innerHTML += `<div class="achv-section-title">${achv.cat}</div>`;
+                grid = document.createElement('div');
+                grid.className = 'achv-grid';
+                container.appendChild(grid);
+                currentCat = achv.cat;
+            }
+
+            let isUnlocked = false;
+            let badgeHtml = "";
+
+            if (achv.type === "auto") {
+                isUnlocked = achv.check();
+                badgeHtml = `<div class="badge-type badge-auto">${isUnlocked ? '[ AUTO-TRACKED: VERIFIED ]' : '[ AUTO-TRACKED: SCANNING ]'}</div>`;
+            } else {
+                isUnlocked = manualClaims.includes(achv.id);
+                badgeHtml = `<button class="badge-type badge-manual" onclick="toggleManualAchv('${achv.id}')">${isUnlocked ? '[ OVERRIDE: UNLOCKED ]' : '[ MANUAL OVERRIDE: INACTIVE ]'}</button>`;
+            }
+
+            grid.innerHTML += `
+                <div class="achv-card ${isUnlocked ? 'unlocked' : ''}">
+                    <div class="achv-icon">${achv.icon}</div>
+                    <div class="achv-info">
+                        <div class="achv-title">${achv.title}</div>
+                        <div class="achv-desc">${achv.desc}</div>
+                        ${badgeHtml}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // Init Logs
+    renderLogs();
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // CENTRAL_ARCHIVE</title>
+    <style>
+        :root {
+            /* Body Branch Palette */
+            --bg-dark: #010a0f;
+            --neon-primary: #00e5ff; 
+            --neon-glow: #80f2ff;
+            --text-primary: #e0faff; 
+            --text-dim: #4da6b3;
+            --neon-warn: #f39c12;
+            --neon-red: #ff2a2a;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+            box-sizing: border-box;
+            background-image: radial-gradient(circle at center, #021a24 0%, #010a0f 100%);
+        }
+
+        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-primary); background: rgba(0,0,0,0.8); flex-shrink: 0;}
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--neon-primary); text-shadow: 0 0 10px var(--neon-primary); text-transform: uppercase; }
+        .btn-return { background: none; border: 2px solid var(--neon-primary); color: var(--neon-primary); padding: 5px 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 5px; transition: 0.3s; text-transform: uppercase;}
+        .btn-return:hover { background: var(--neon-primary); color: black; box-shadow: 0 0 15px var(--neon-primary); }
+
+        /* Main Layout */
+        .archive-layout { flex: 1; display: grid; grid-template-columns: 250px 1fr; gap: 20px; min-height: 0; padding-top: 20px; }
+
+        /* Sidebar Nav */
+        .sidebar { background: rgba(0, 20, 30, 0.5); border-right: 1px solid var(--text-dim); display: flex; flex-direction: column; }
+        .nav-group { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .nav-label { font-size: 0.65rem; color: var(--text-dim); font-weight: bold; margin-bottom: 5px; letter-spacing: 2px;}
+        .nav-btn { background: none; border: 1px solid transparent; color: var(--text-dim); text-align: left; padding: 10px; cursor: pointer; font-family: inherit; font-size: 0.8rem; transition: 0.2s; }
+        .nav-btn:hover { color: var(--neon-primary); border-color: rgba(0, 229, 255, 0.3); }
+        .nav-btn.active { color: var(--neon-primary); border-color: var(--neon-primary); background: rgba(0, 229, 255, 0.1); font-weight: bold; }
+
+        /* Content Area */
+        .content-panel { display: flex; flex-direction: column; min-height: 0; }
+        .search-bar { width: 100%; background: #000; border: 1px solid var(--text-dim); color: #fff; padding: 12px; font-family: inherit; margin-bottom: 20px; box-sizing: border-box; outline: none; }
+        .search-bar:focus { border-color: var(--neon-primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
+
+        .archive-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; align-content: flex-start; padding-right: 10px;}
+        
+        /* Archive Cards */
+        .archive-card { 
+            background: rgba(0,0,0,0.6); border: 1px solid var(--text-dim); padding: 15px; 
+            border-radius: 5px; transition: 0.2s; cursor: pointer; position: relative;
+            overflow: hidden;
+        }
+        .archive-card:hover { border-color: var(--neon-primary); transform: translateY(-2px); }
+        .card-type { position: absolute; top: 0; right: 0; font-size: 0.5rem; background: var(--text-dim); color: #000; padding: 2px 8px; font-weight: bold; text-transform: uppercase; }
+        .card-title { font-weight: bold; font-size: 1rem; color: var(--neon-glow); margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 5px;}
+        .card-meta { font-size: 0.7rem; color: var(--text-dim); line-height: 1.4; }
+        .card-snippet { margin-top: 10px; font-size: 0.75rem; color: var(--text-primary); font-style: italic; }
+
+        /* Modal View */
+        #detailModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; justify-content: center; align-items: center; }
+        .modal-box { width: 80%; max-width: 600px; background: var(--bg-dark); border: 2px solid var(--neon-primary); border-radius: 10px; box-shadow: 0 0 30px rgba(0, 229, 255, 0.3); display: flex; flex-direction: column; overflow: hidden;}
+        .modal-header { padding: 15px; background: rgba(0, 229, 255, 0.1); border-bottom: 1px solid var(--neon-primary); font-weight: bold; color: var(--neon-glow); text-transform: uppercase; }
+        .modal-body { padding: 25px; overflow-y: auto; max-height: 70vh; font-size: 0.9rem; line-height: 1.6; }
+        .modal-footer { padding: 15px; border-top: 1px solid #333; display: flex; justify-content: flex-end; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-dim); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYS_BODY // CENTRAL_ARCHIVE</h1>
+    <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE</button>
+</header>
+
+<div class="archive-layout">
+    
+    <div class="sidebar">
+        <div class="nav-group">
+            <div class="nav-label">LIBRARY_ROOT</div>
+            <button class="nav-btn active" id="nav-all" onclick="setCategory('all')">ALL_RECORDS</button>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-label">DATA_STREAMS</div>
+            <button class="nav-btn" onclick="setCategory('recipe')">RECIPE_BOOKS</button>
+            <button class="nav-btn" onclick="setCategory('workout')">STRENGTH_LOGS</button>
+            <button class="nav-btn" onclick="setCategory('wardrobe')">WARDROBE_ASSETS</button>
+            <button class="nav-btn" onclick="setCategory('finance')">FISCAL_LEDGERS</button>
+        </div>
+
+        <div class="nav-group" style="margin-top: auto;">
+            <div class="nav-label">SYSTEM_TOOLS</div>
+            <button class="nav-btn" style="color: var(--neon-warn);" onclick="exportData()">EXPORT_DATABASE</button>
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <input type="text" class="search-bar" id="archiveSearch" placeholder="QUERY_ARCHIVE (Name, Category, Content)..." oninput="renderArchive()">
+        
+        <div class="archive-grid" id="archiveGrid">
+            </div>
+    </div>
+
+</div>
+
+<div id="detailModal">
+    <div class="modal-box">
+        <div class="modal-header" id="modalTitle">RECORD_DETAILS</div>
+        <div class="modal-body" id="modalBody">
+            </div>
+        <div class="modal-footer">
+            <button class="btn-return" onclick="closeModal()">CLOSE_RECORD</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeCategory = 'all';
+    
+    // This function acts as the "Aggregator" across all LocalStorage keys
+    function fetchAllData() {
+        const records = [];
+
+        // 1. Fetch Wardrobe Data
+        const wardrobe = JSON.parse(localStorage.getItem('wos_wardrobe_items')) || [];
+        wardrobe.forEach(item => {
+            records.push({
+                type: 'wardrobe', title: item.name, cat: item.cat, 
+                content: `Category: ${item.cat}`, meta: `ID: ${item.id}`, raw: item
+            });
+        });
+
+        // 2. Fetch Finance Data
+        const finance = JSON.parse(localStorage.getItem('wos_finance_tx')) || [];
+        finance.forEach(tx => {
+            records.push({
+                type: 'finance', title: tx.desc, cat: tx.cat,
+                content: `Amount: $${tx.amt.toFixed(2)} | Type: ${tx.type}`, 
+                meta: `Date: ${tx.date}`, raw: tx
+            });
+        });
+
+        // 3. Mock Data for forward-compatibility (Nutrition & Strength)
+        // These will populate once you build those modules!
+        const recipes = JSON.parse(localStorage.getItem('wos_recipes')) || [
+            { title: "High-Protein Stir Fry", content: "Archived recipe for meal prep.", date: "2026-04-20" },
+            { title: "Oatmeal Power Bowl", content: "Morning nutrition protocol.", date: "2026-04-18" }
+        ];
+        recipes.forEach(r => records.push({ type: 'recipe', title: r.title, content: r.content, meta: r.date, raw: r }));
+
+        const workouts = JSON.parse(localStorage.getItem('wos_workouts')) || [
+            { title: "Chest/Tri Vol. 1", content: "Bench Press 3x10, Dips 3x12...", date: "2026-04-21" }
+        ];
+        workouts.forEach(w => records.push({ type: 'workout', title: w.title, content: w.content, meta: w.date, raw: w }));
+
+        return records;
+    }
+
+    function setCategory(cat) {
+        activeCategory = cat;
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText.toLowerCase().includes(cat));
+        });
+        if(cat === 'all') document.getElementById('nav-all').classList.add('active');
+        renderArchive();
+    }
+
+    function renderArchive() {
+        const grid = document.getElementById('archiveGrid');
+        const searchTerm = document.getElementById('archiveSearch').value.toLowerCase();
+        grid.innerHTML = "";
+
+        const allRecords = fetchAllData();
+        
+        const filtered = allRecords.filter(r => {
+            const matchesCat = (activeCategory === 'all' || r.type === activeCategory);
+            const matchesSearch = r.title.toLowerCase().includes(searchTerm) || 
+                                 r.content.toLowerCase().includes(searchTerm);
+            return matchesCat && matchesSearch;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding-top: 50px;">NO_MATCHING_RECORDS_IN_VAULT</div>`;
+            return;
+        }
+
+        filtered.forEach(record => {
+            const card = document.createElement('div');
+            card.className = 'archive-card';
+            card.onclick = () => openModal(record);
+            card.innerHTML = `
+                <div class="card-type">${record.type}</div>
+                <div class="card-title">${record.title}</div>
+                <div class="card-meta">${record.meta}</div>
+                <div class="card-snippet">${record.content.substring(0, 60)}...</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function openModal(record) {
+        document.getElementById('detailModal').style.display = 'flex';
+        document.getElementById('modalTitle').innerText = `ACCESSING_RECORD // ${record.title}`;
+        
+        let contentHtml = `<p><strong>TYPE:</strong> ${record.type.toUpperCase()}</p>`;
+        contentHtml += `<p><strong>META:</strong> ${record.meta}</p>`;
+        contentHtml += `<hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">`;
+        contentHtml += `<div style="white-space: pre-wrap;">${record.content}</div>`;
+        
+        // Custom object viewer for wardrobe/finance
+        if (record.type === 'wardrobe' && record.raw.img) {
+            contentHtml += `<img src="${record.raw.img}" style="width: 100%; border-radius: 5px; margin-top: 15px; border: 1px solid var(--text-dim);">`;
+        }
+
+        document.getElementById('modalBody').innerHTML = contentHtml;
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = 'none';
+    }
+
+    function exportData() {
+        const data = {};
+        // Scrape all W-OS related keys
+        for (let i = 0; i < localStorage.length; i++){
+            let key = localStorage.key(i);
+            if(key.startsWith('wos_')) {
+                data[key] = JSON.parse(localStorage.getItem(key));
+            }
+        }
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `WOS_SYSTEM_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+    }
+
+    // Boot
+    renderArchive();
+</script>
+</body>
+</html>

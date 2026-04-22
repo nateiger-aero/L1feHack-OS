@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // REST_CALIBRATION</title>
+   <style>
+        :root {
+            /* Spirit Branch Palette */
+            --bg-dark: #0a0212;
+            --neon-primary: #b537f2; 
+            --neon-glow: #d68aff;
+            --text-primary: #f0e6ff; 
+            --text-dim: #8b6b99;
+            --neon-warn: #f39c12;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body { 
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); 
+            margin: 0; padding: 20px;
+            background-image: linear-gradient(rgba(10, 2, 18, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
+                              linear-gradient(90deg, rgba(181, 55, 242, 0.03), rgba(0, 0, 0, 0), rgba(181, 55, 242, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        /* ... container and header styles stay the same ... */
+
+        input, select { 
+            background: #000; border: 1px solid var(--text-dim); color: #fff; 
+            padding: 10px; font-family: inherit; outline: none; font-size: 0.8rem; 
+            width: 100%; box-sizing: border-box; transition: 0.3s; 
+            
+            /* THIS IS THE MAGIC LINE */
+            color-scheme: dark; 
+        }
+
+        .container { 
+            max-width: 1050px; margin: 0 auto; border: 1px solid var(--neon-primary); 
+            background: rgba(10, 2, 18, 0.95); padding: 25px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        }
+
+        header { border-bottom: 2px solid var(--neon-primary); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--neon-primary); }
+
+        .btn-return { background: none; border: 1px solid var(--neon-primary); color: var(--neon-primary); padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 0.7rem; font-weight: bold; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: 0.3s; }
+        .btn-return:hover { background: var(--neon-primary); color: black; box-shadow: 0 0 15px var(--neon-primary); }
+
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .panel { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(181, 55, 242, 0.3); padding: 20px; position: relative; }
+        
+        h2 { font-size: 0.85rem; text-transform: uppercase; border-left: 4px solid var(--neon-primary); padding-left: 10px; margin: 0 0 15px 0; color: var(--neon-primary); letter-spacing: 1px; }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); font-weight: bold; margin-bottom: 5px; margin-top: 15px; letter-spacing: 1px; }
+        
+        input, select { background: #000; border: 1px solid var(--text-dim); color: #fff; padding: 10px; font-family: inherit; outline: none; font-size: 0.8rem; width: 100%; box-sizing: border-box; transition: 0.3s; }
+        input:focus, select:focus { border-color: var(--neon-glow); box-shadow: 0 0 10px rgba(181, 55, 242, 0.2); }
+
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; }
+        
+        .cyber-check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.7rem; color: var(--text-primary); margin-top: 10px; }
+        .cyber-check input { width: auto; margin: 0; accent-color: var(--neon-primary); }
+
+        .day-selector { display: flex; gap: 5px; margin-top: 5px; }
+        .day-label { flex: 1; text-align: center; background: #000; border: 1px solid var(--text-dim); color: var(--text-dim); padding: 8px 0; cursor: pointer; font-size: 0.7rem; transition: 0.3s; }
+        .day-label:has(input:checked) { background: rgba(181, 55, 242, 0.2); border-color: var(--neon-glow); color: var(--neon-glow); box-shadow: inset 0 0 10px rgba(181, 55, 242, 0.3); }
+        .day-label input { display: none; }
+
+        .btn-commit { width: 100%; padding: 18px; background: none; border: 2px solid var(--neon-primary); color: var(--neon-primary); cursor: pointer; font-weight: bold; letter-spacing: 5px; margin-top: 25px; font-family: inherit; font-size: 1rem; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: 0.3s; }
+        .btn-commit:hover { background: var(--neon-primary); color: black; box-shadow: 0 0 25px var(--neon-primary); }
+
+        .readout-box { background: #05010a; border: 1px dashed var(--neon-glow); padding: 15px; margin-top: 15px; text-align: center; }
+        .readout-val { font-size: 1.5rem; color: var(--neon-glow); font-weight: bold; letter-spacing: 2px; margin-top: 5px; text-shadow: 0 0 10px var(--neon-primary); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_SPIRIT // REST_CALIBRATION</h1>
+        <button class="btn-return" onclick="window.parent.closeApp()">◄ TERMINATE_LINK</button>
+    </header>
+
+    <div class="grid-layout">
+        
+        <div class="column">
+            
+            <div class="panel">
+                <h2>01_SLEEP_CAPACITY_TARGETS</h2>
+                
+                <label>DESIRED_SLEEP_RANGE:</label>
+                <div class="flex-row">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 5px;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">MIN:</span>
+                        <input type="number" id="slpMinHr" value="7" min="0" max="24" style="text-align:center;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">H</span>
+                        <input type="number" id="slpMinMin" value="30" min="0" max="59" style="text-align:center;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">M</span>
+                    </div>
+                    <div style="flex: 1; display: flex; align-items: center; gap: 5px;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">MAX:</span>
+                        <input type="number" id="slpMaxHr" value="8" min="0" max="24" style="text-align:center;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">H</span>
+                        <input type="number" id="slpMaxMin" value="0" min="0" max="59" style="text-align:center;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">M</span>
+                    </div>
+                </div>
+
+                <label>WAKEUP_PROTOCOL:</label>
+                <select id="wakeType" onchange="toggleWakeType()">
+                    <option value="HARD">HARD_BOOT (Exact Time)</option>
+                    <option value="RANGE">SOFT_BOOT (Time Range)</option>
+                </select>
+
+                <div class="flex-row" id="wakeInputs" style="margin-top: 10px;">
+                    <div style="flex: 1;">
+                        <label style="margin-top:0;">PRIMARY_TIME:</label>
+                        <input type="time" id="wakeTime1" value="07:00">
+                    </div>
+                    <div style="flex: 1; display: none;" id="wakeTime2Container">
+                        <label style="margin-top:0;">LIMIT_TIME:</label>
+                        <input type="time" id="wakeTime2" value="07:30">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>02_WIND_DOWN_PROTOCOL</h2>
+                
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>TARGET_SLEEP_TIME:</label>
+                        <input type="time" id="wdSleepTime" value="22:30">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>EST_LATENCY (MINS):</label>
+                        <input type="number" id="wdLatency" value="20" placeholder="Time to fall asleep">
+                    </div>
+                </div>
+
+                <label style="margin-top: 20px; border-bottom: 1px solid var(--text-dim); padding-bottom: 5px;">ENVIRONMENTAL_CUTOFFS</label>
+                
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>SCREEN_BLACKOUT:</label>
+                        <input type="time" id="cutScreen" value="21:30">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>CAFFEINE_HALT:</label>
+                        <input type="time" id="cutCaf" value="14:00">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>NUTRITION_HALT:</label>
+                        <input type="time" id="cutFood" value="20:00">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="column">
+            
+            <div class="panel">
+                <h2>03_MORNING_BOOT_SEQUENCE</h2>
+                
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <label>FIRST_EVENT_TIME (Class/Work):</label>
+                        <input type="time" id="msFirstEvent" value="09:00" onchange="calculateBootTime()">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>COMMUTE_TIME (MINS):</label>
+                        <input type="number" id="msCommute" value="30" oninput="calculateBootTime()">
+                    </div>
+                </div>
+
+                <label style="margin-top: 20px; border-bottom: 1px solid var(--text-dim); padding-bottom: 5px;">ROUTINE_TIMING_MATRIX (MINS)</label>
+                <div class="flex-row" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 40%;">
+                        <label>SHOWER / HYGIENE:</label>
+                        <input type="number" class="boot-calc" id="msHygiene" value="15" oninput="calculateBootTime()">
+                    </div>
+                    <div style="flex: 1; min-width: 40%;">
+                        <label>SKINCARE_PROTOCOL:</label>
+                        <input type="number" class="boot-calc" id="msSkin" value="10" oninput="calculateBootTime()">
+                    </div>
+                    <div style="flex: 1; min-width: 40%;">
+                        <label>COFFEE / FUEL:</label>
+                        <input type="number" class="boot-calc" id="msFood" value="20" oninput="calculateBootTime()">
+                    </div>
+                    <div style="flex: 1; min-width: 40%;">
+                        <label>SAFETY_BUFFER:</label>
+                        <input type="number" class="boot-calc" id="msBuffer" value="15" oninput="calculateBootTime()">
+                    </div>
+                </div>
+
+                <div class="readout-box">
+                    <div style="font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px;">SYS_CALCULATED_WAKE_REQUIREMENT</div>
+                    <div class="readout-val" id="calcWakeTime">07:30 AM</div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <h2>04_SUPPLEMENTAL_REST (NAPS)</h2>
+                
+                <label class="cyber-check">
+                    <input type="checkbox" id="napToggle" onchange="toggleNaps()">
+                    ENABLE_SUPPLEMENTAL_REST_PROTOCOLS
+                </label>
+
+                <div id="napSettings" style="display: none; opacity: 0.5; transition: 0.3s; margin-top: 15px;">
+                    <div class="flex-row">
+                        <div style="flex: 1;">
+                            <label>NAP_FREQUENCY (Per Day):</label>
+                            <input type="number" id="napCount" value="1" min="1">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>DURATION (MINS):</label>
+                            <input type="number" id="napDur" value="20" min="5">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>TARGET_TIME:</label>
+                            <input type="time" id="napTime" value="14:30">
+                        </div>
+                    </div>
+
+                    <label>AUTHORIZED_DAYS:</label>
+                    <div class="day-selector">
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="MON"> M</label>
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="TUE"> T</label>
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="WED"> W</label>
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="THU"> TH</label>
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="FRI"> F</label>
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="SAT" checked> S</label>
+                        <label class="day-label"><input type="checkbox" class="nap-day" value="SUN" checked> SU</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <button class="btn-commit" onclick="saveRestTargets()">LOCK_PARAMETERS_INTO_ARCHIVE</button>
+
+</div>
+
+<script>
+    // --- UI TOGGLES ---
+    function toggleWakeType() {
+        const type = document.getElementById('wakeType').value;
+        document.getElementById('wakeTime2Container').style.display = type === 'RANGE' ? 'block' : 'none';
+    }
+
+    function toggleNaps() {
+        const isEnabled = document.getElementById('napToggle').checked;
+        const settings = document.getElementById('napSettings');
+        settings.style.display = 'block';
+        setTimeout(() => {
+            settings.style.opacity = isEnabled ? '1' : '0.3';
+            settings.style.pointerEvents = isEnabled ? 'auto' : 'none';
+        }, 10);
+    }
+
+    // --- SMART CALCULATOR ENGINE ---
+    function calculateBootTime() {
+        const firstEventStr = document.getElementById('msFirstEvent').value;
+        if (!firstEventStr) return;
+
+        // Parse Event Time
+        let [hours, minutes] = firstEventStr.split(':').map(Number);
+        let eventDate = new Date();
+        eventDate.setHours(hours, minutes, 0, 0);
+
+        // Gather all routine deductibles
+        const commute = parseInt(document.getElementById('msCommute').value) || 0;
+        const hygiene = parseInt(document.getElementById('msHygiene').value) || 0;
+        const skin = parseInt(document.getElementById('msSkin').value) || 0;
+        const food = parseInt(document.getElementById('msFood').value) || 0;
+        const buffer = parseInt(document.getElementById('msBuffer').value) || 0;
+
+        const totalDeductionMins = commute + hygiene + skin + food + buffer;
+
+        // Subtract from event time
+        eventDate.setMinutes(eventDate.getMinutes() - totalDeductionMins);
+
+        // Format for Output
+        const outH = eventDate.getHours();
+        const outM = eventDate.getMinutes().toString().padStart(2, '0');
+        const ampm = outH >= 12 ? 'PM' : 'AM';
+        const displayH = outH % 12 || 12; // convert to 12hr
+
+        document.getElementById('calcWakeTime').innerText = `${displayH}:${outM} ${ampm}`;
+    }
+
+    // --- SAVE / DATA COMPILATION ---
+    function saveRestTargets() {
+        // Compile Sleep Capacity
+        const sleepCap = {
+            min: { hr: document.getElementById('slpMinHr').value, min: document.getElementById('slpMinMin').value },
+            max: { hr: document.getElementById('slpMaxHr').value, min: document.getElementById('slpMaxMin').value },
+            wakeType: document.getElementById('wakeType').value,
+            wakeTime1: document.getElementById('wakeTime1').value,
+            wakeTime2: document.getElementById('wakeTime2').value
+        };
+
+        // Compile Wind Down
+        const windDown = {
+            sleepTime: document.getElementById('wdSleepTime').value,
+            latency: document.getElementById('wdLatency').value,
+            cutoffs: {
+                screen: document.getElementById('cutScreen').value,
+                caffeine: document.getElementById('cutCaf').value,
+                food: document.getElementById('cutFood').value
+            }
+        };
+
+        // Compile Boot Sequence
+        const bootSeq = {
+            firstEvent: document.getElementById('msFirstEvent').value,
+            commute: document.getElementById('msCommute').value,
+            routine: {
+                hygiene: document.getElementById('msHygiene').value,
+                skin: document.getElementById('msSkin').value,
+                food: document.getElementById('msFood').value,
+                buffer: document.getElementById('msBuffer').value
+            },
+            calculatedWake: document.getElementById('calcWakeTime').innerText
+        };
+
+        // Compile Naps
+        const napsEnabled = document.getElementById('napToggle').checked;
+        const napDays = Array.from(document.querySelectorAll('.nap-day:checked')).map(cb => cb.value);
+        const naps = {
+            enabled: napsEnabled,
+            count: document.getElementById('napCount').value,
+            duration: document.getElementById('napDur').value,
+            time: document.getElementById('napTime').value,
+            days: napDays
+        };
+
+        const finalProfile = {
+            id: Date.now(),
+            dateSet: new Date().toISOString().split('T')[0],
+            sleepCap, windDown, bootSeq, naps
+        };
+
+        // Save to Archive
+        let archive = JSON.parse(localStorage.getItem('wos_rest_targets')) || [];
+        archive.push(finalProfile);
+        localStorage.setItem('wos_rest_targets', JSON.stringify(archive));
+
+        alert("[ CALIBRATION SAVED ]\nRest parameters locked into central archive.");
+    }
+
+    // Init calculator on load
+    calculateBootTime();
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-OS // NUTRITION_LINK</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00e5ff;
+            --neon-dim: rgba(0, 229, 255, 0.1);
+            --neon-accent: #2ecc71;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        /* === GLOBAL STYLES === */
+        body { 
+            font-family: var(--font-main); 
+            background-color: var(--bg-dark); 
+            color: var(--neon-cyan); 
+            margin: 0; padding: 20px;
+            /* Scanline effect */
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+        }
+
+        .container { 
+            max-width: 900px; margin: 0 auto; 
+            border: 1px solid var(--neon-dim); 
+            background: rgba(0, 10, 15, 0.9);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.05);
+            clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px);
+        }
+
+        header { 
+            background: rgba(0, 229, 255, 0.1); 
+            padding: 20px; text-align: left; 
+            border-bottom: 1px solid var(--neon-cyan);
+        }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; text-transform: uppercase; }
+
+        /* === TAB NAV === */
+        .tab-nav { display: flex; background: rgba(0,0,0,0.5); gap: 2px; }
+        .tab-btn { 
+            flex: 1; padding: 12px; border: none; background: none; 
+            color: var(--neon-dim); font-weight: bold; cursor: pointer; 
+            transition: 0.3s; font-family: var(--font-main); font-size: 0.8rem;
+            text-transform: uppercase; border-bottom: 2px solid transparent;
+        }
+        .tab-btn:hover { color: var(--neon-cyan); background: rgba(0, 229, 255, 0.05); }
+        .tab-btn.active { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); background: rgba(0, 229, 255, 0.1); }
+
+        /* === CONTENT SECTIONS === */
+        .tab-content { display: none; padding: 30px; animation: glitch-in 0.3s ease-out; }
+        .tab-content.active { display: block; }
+
+        @keyframes glitch-in {
+            0% { transform: translateX(-10px); opacity: 0; }
+            50% { transform: translateX(5px); }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        h2 { font-size: 1rem; color: var(--neon-cyan); margin-bottom: 20px; border-left: 4px solid var(--neon-cyan); padding-left: 10px; text-transform: uppercase; }
+
+        /* === FORM ELEMENTS === */
+        label { display: block; margin-top: 15px; font-size: 0.7rem; color: var(--neon-dim); letter-spacing: 1px; }
+        
+        input[type="text"], input[type="number"], select { 
+            width: 100%; padding: 12px; margin-top: 5px; 
+            background: rgba(0, 20, 25, 0.8); border: 1px solid var(--neon-dim); 
+            color: white; font-family: var(--font-main); outline: none;
+            transition: 0.3s;
+        }
+        input:focus, select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-dim); }
+
+        .action-btn { 
+            width: 100%; padding: 15px; background: none; 
+            border: 1px solid var(--neon-cyan); color: var(--neon-cyan); 
+            font-family: var(--font-main); font-weight: bold; cursor: pointer;
+            margin-top: 20px; text-transform: uppercase; letter-spacing: 2px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: 0.3s;
+        }
+        .action-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* === DATA LISTS === */
+        .list-box { 
+            background: rgba(0, 255, 255, 0.03); padding: 15px; 
+            border: 1px solid var(--neon-dim); margin-top: 15px;
+        }
+        .list-box strong { font-size: 0.8rem; color: var(--neon-cyan); letter-spacing: 1px; }
+        ul { padding-left: 15px; margin: 10px 0 0 0; list-style-type: '>'; color: #fff; font-size: 0.9rem; }
+        
+        .pantry-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--neon-dim); padding: 5px 0; }
+        .remove-btn { color: #ff2a2a; cursor: pointer; font-size: 0.7rem; border: none; background: none; }
+
+        .form-row { display: flex; gap: 10px; align-items: flex-end; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--neon-dim); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SYS_LINK // NUTRITION_V1.0</h1>
+    </header>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('planner')">Weekly Planner</button>
+        <button class="tab-btn" onclick="switchTab('recipes')">Recipe Data</button>
+        <button class="tab-btn" onclick="switchTab('pantry')">Inventory</button>
+    </div>
+
+    <div id="planner" class="tab-content active">
+        <h2>Grocery Generation</h2>
+        <label>TARGET_RECIPE:</label>
+        <select id="recipeSelect"></select>
+
+        <div class="form-row">
+            <div>
+                <label>USER_COUNT:</label>
+                <input type="number" id="peopleCount" value="1" min="1">
+            </div>
+            <div>
+                <label>CYCLE_DAYS:</label>
+                <input type="number" id="daysCount" value="1" min="1">
+            </div>
+        </div>
+
+        <button class="action-btn" id="generateBtn">Compile List</button>
+
+        <div id="outputArea" style="display: none;">
+            <div class="list-box"><strong>🛒 REQUISITION (FRESH):</strong><ul id="freshList"></ul></div>
+            <div class="list-box"><strong>📦 REQUISITION (BULK):</strong><ul id="bulkList"></ul></div>
+            <div class="list-box" style="opacity: 0.5;"><strong>✅ IN_STOCK (SKIP):</strong><ul id="pantryHitList" style="text-decoration: line-through;"></ul></div>
+        </div>
+    </div>
+
+    <div id="recipes" class="tab-content">
+        <h2>Web Import Protocol</h2>
+        <div class="form-row">
+            <input type="text" id="importUrl" placeholder="URL_SOURCE_INPUT...">
+            <button class="action-btn" style="margin-top: 0; width: auto;" onclick="mockImport()">IMPORT</button>
+        </div>
+        
+        <h2 style="margin-top: 40px;">Manual Data Entry</h2>
+        <label>RECIPE_ID:</label>
+        <input type="text" id="newRecipeName" placeholder="e.g., PROTEIN_SHAKE">
+        
+        <label>BASE_SERVINGS:</label>
+        <input type="number" id="newRecipeServings" value="2" min="1">
+        
+        <label style="margin-top: 20px;">INGREDIENT_NODE:</label>
+        <div class="form-row">
+            <input type="text" id="ingName" placeholder="NAME">
+            <input type="number" id="ingQty" placeholder="QTY" style="width: 80px;">
+            <input type="text" id="ingUnit" placeholder="UNIT" style="width: 80px;">
+        </div>
+        <label style="font-weight: normal; margin-top: 10px;">
+            <input type="checkbox" id="ingBulk"> ELIGIBLE_FOR_BULK_PROCUREMENT?
+        </label>
+        
+        <button class="action-btn" style="border-color: #3498db; color: #3498db;" id="addIngBtn">+ STAGE_DATA</button>
+        <ul id="stagedIngredientsList" style="margin-bottom: 20px; font-size: 0.8em; color: var(--neon-dim);"></ul>
+        <button class="action-btn" id="saveRecipeBtn">💾 COMMIT_TO_DATABASE</button>
+    </div>
+
+    <div id="pantry" class="tab-content">
+        <h2>Inventory Check</h2>
+        <div class="form-row">
+            <input type="text" id="pantryItemInput" placeholder="ITEM_LOG_INPUT...">
+            <button class="action-btn" style="margin-top: 0; width: auto;" id="addPantryBtn">+ ADD</button>
+        </div>
+
+        <div class="list-box">
+            <strong>CURRENT_STOCKS:</strong>
+            <ul id="pantryList"></ul>
+        </div>
+    </div>
+</div>
+
+<script src="recipe-app.js"></script>
+</body>
+</html>
